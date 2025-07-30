@@ -3,7 +3,7 @@
 (bundles "GAME.CGO")
 (require "engine/common-obs/generic-obs.gc")
 (require "engine/game/projectiles.gc")
-(define-extern any-interactive-targets-close? (function process-drawable float basic))
+(define-extern any-interactive-target-close? (function process-drawable float basic))
 (define-extern remote-target-process-close? (function target process-drawable float basic))
 
 (defenum eco-door-flags
@@ -159,7 +159,7 @@ eco-door-event-handler
       (update-transforms! (-> self root))
       (ja-post)
       (loop
-        (when (and *target* (any-interactive-targets-close? self (-> self open-distance)))
+        (when (and *target* (any-interactive-target-close? self (-> self open-distance)))
           (eco-door-method-26 self)
           (let ((has-found-close-target #f))
             (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
@@ -211,7 +211,7 @@ eco-door-event-handler
         (let ((f30-0 (vector4-dot (-> self out-dir) (target-pos 0)))
               (f28-0 (vector4-dot (-> self out-dir) (camera-pos))))
           (when (and (-> self auto-close)
-                     (or (not *target*) (not (any-interactive-targets-close? self (-> self open-distance)))))
+                     (or (not *target*) (not (any-interactive-target-close? self (-> self open-distance)))))
             (if (and (>= (* f30-0 f28-0) 0.0) (< 16384.0 (fabs f28-0))) (go-virtual door-closing))))
         (suspend))))
 

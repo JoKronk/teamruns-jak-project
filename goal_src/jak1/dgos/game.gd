@@ -32,7 +32,7 @@
   "dma-disasm.o"
   "pc-cheats.o" ;; added
   "pckernel-h.o" ;; added
-  "mod-settings-h.o" ;; added
+  "mp-types-h.o" ;; added
   "pckernel-impl.o" ;; added
   "pc-debug-common.o" ;; added
   "pc-debug-methods.o" ;; added
@@ -349,14 +349,22 @@
   "ticky.o"
   "hud-classes-pc.o" ;; added
   "mod-settings.o" ;; added
-  "mod-game-handler.o" ;; added
-  "mod-spectator-mode.o" ;; added
+  "mp-types.o" ;; added
+  "mp-settings.o" ;; added
+  "spec-types.o" ;; added
+  "mp-levels.o" ;; added
+  "mp-deport.o" ;; added
+  "mp-utils.o" ;; 
+  "spec-logic.o" ;; added
   "mod-text-render.o" ;; added
-  "mod-remote-interaction.o" ;; added
+  "mod-checkpoint.o" ;; added
+  "mp-taunts.o" ;; added
+  "taunt-info.go" ;; added
+  "mp-interactions.o" ;; added
+  "mp-hooks.o" ;; added
+  "mp-logic.o" ;; added
   "mod-common-functions.o" ;; added
   "orb-placer.o" ;; added
-  "taunt-menu.o" ;; added
-  "taunt-info.go" ;; added
   "mod-custom-code.o" ;; added
   "mod-debug.o" ;; added
   ;; keep zoomer stuff loaded

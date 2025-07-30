@@ -1,0 +1,1464 @@
+;;-*-Lisp-*-
+(in-package goal)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; What is this file for.
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#|
+This files contains function that in general can be helpful within mod creation be it multi or singleplayer.
+The target index for you is always 0 and works in singleplayer as well.
+|#
+
+
+(defun reset-speedrun-variables ()
+  (set! (-> *zoomer-level-unlocks* fire-canyon) #f)
+  (set! (-> *zoomer-level-unlocks* mountain-pass) #f)
+  (set! (-> *zoomer-level-unlocks* lava-tube) #f)
+  (set! *allow-one-time-citadel-skip?* #t)
+)
+
+;; --- target logic ---
+
+
+;; given target is on zoomer
+(defun target-on-racer? ((t target))
+  (logtest? (-> t control root-prim prim-core action) (collide-action racer))
+)
+
+;; given target is on flutflut
+(defun target-on-flut? ((t target))
+  (logtest? (-> t control root-prim prim-core action) (collide-action flut))
+)
+
+;; given target is on a slide
+(defun target-on-tube? ((t target))
+  (logtest? (-> t control root-prim prim-core action) (collide-action tube))
+)
+
+;; given target is on foot
+(defun target-on-foot? ((t target))
+  (not (logtest? (-> t control root-prim prim-core action) (collide-action racer flut)))
+)
+
+;; given target is on foot
+(defun target-is-interactive? ((remote-target target))
+  (if (and remote-target (is-interactive? (the int (-> remote-target saved-owner)))) #t #f)
+  )
+  
+;; current target is grabbed
+(defun is-grabbed? ()
+  (logtest? (-> *target* state-flags)
+    (state-flags grabbed))
+  )
+
+;; target index is marked as interactive target
+(defun is-interactive? ((tgt-idx int))
+  (= (-> *multiplayer-info* players tgt-idx mp_state) (mp-tgt-state mp-tgt-interactive))
+  )
+
+;; target index is marked as an active target (ghost player)
+(defun is-active? ((tgt-idx int))
+  (= (-> *multiplayer-info* players tgt-idx mp_state) (mp-tgt-state mp-tgt-active))
+  )
+
+;; target index is marked as inactive target (not visible)
+(defun is-inactive? ((tgt-idx int))
+  (= (-> *multiplayer-info* players tgt-idx mp_state) (mp-tgt-state mp-tgt-disconnected))
+  )
+
+;; target index is marked as teammate
+(defun is-teammate? ((tgt-idx int))
+  (= (-> *multiplayer-info* players tgt-idx team_id) (-> *self-player-info* team_id))
+  )
+
+;; target index has in the previous frame swapped multiplayer state interactive/active/inactive
+(defun has-new-mp-state? ((tgt-idx int))
+  (!= (-> *multiplayer-info* players tgt-idx mp_state) (-> *multiplayer-info* players tgt-idx mp_state_check))
+  )
+
+;; target has given multiplayer state interactive/active/inactive
+(defun target-has-mp-state? ((remote-target target) (state symbol))
+  (if (= (-> *multiplayer-info* players (-> remote-target saved-owner) tgt_state) state) #t #f)
+  )
+
+;; returns if given process is within given range to self target
+(defun process-close? ((proc process-drawable) (dist float))
+  (and 
+    proc
+    (<= 
+      (vector-vector-distance 
+        (target-pos 0) 
+        (-> proc root trans)
+        )
+      dist
+      )
+    )
+  )
+
+;; returns if given process is within given range of given target
+(defun remote-target-process-close? ((remote-target target) (proc process-drawable) (dist float))
+  (and 
+    proc
+    (<= 
+      (vector-vector-distance 
+        (remote-target-pos 0 remote-target) 
+        (-> proc root trans)
+        )
+      dist
+      )
+    )
+  )
+
+;; returns if any interactive target is within distance to process (including self)
+(defun any-interactive-target-close? ((proc process-drawable) (dist float))
+  (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+    (let ((target (get-interactive-target tgt-idx)))
+      (if (and target proc (<= (vector-vector-distance (remote-target-pos 0 target) (-> proc root trans)) dist))
+          (return #t)
+        )
+      )
+    )
+    #f
+  )
+
+;; returns if any interactive remote target is within distance to process (does not include self)
+(defun any-interactive-remote-target-close? ((proc process-drawable) (dist float))
+  (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+    (let ((target (get-interactive-target tgt-idx)))
+      (if (and target (!= target *target*) proc (<= (vector-vector-distance (remote-target-pos 0 target) (-> proc root trans)) dist))
+          (return #t)
+        )
+      )
+    )
+    #f
+  )
+
+;; returns if any interactive target is within distance to self
+(defun any-interactive-remote-target-close-to-target? ((dist float))
+  (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+    (let ((target (get-interactive-target tgt-idx)))
+      (if (and (!= tgt-idx (-> *multiplayer-info* player_num)) (<= (vector-vector-distance (remote-target-pos 0 target) (-> *target* root trans)) dist))
+        (return #t)
+        )
+      )
+    )
+    #f
+  )
+
+;; returns if any interactive target is within distance to vector
+(defun any-interactive-target-close-to-vector? ((vect vector) (dist float))
+  (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+    (let ((target (get-interactive-target tgt-idx)))
+      (if (and target vect (<= (vector-vector-distance (remote-target-pos 0 target) vect) dist))
+          (return #t)
+        )
+      )
+    )
+    #f
+  )
+
+;; checks if target is within given level's sphere
+(defun target-in-level-sphere? ((level-name symbol))
+  (if (and (-> *level* level0) (= (-> *level* level0 name) level-name) (-> *level* level0 inside-sphere?))
+    (return #t)
+    )
+  (if (and (-> *level* level1) (= (-> *level* level1 name) level-name) (-> *level* level1 inside-sphere?))
+    (return #t)
+    )
+  #f
+  )
+  
+;; checks if there's other targets active in the game
+(defun game-has-other-targets? ()
+  (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+    (let ((target (get-target tgt-idx)))
+      (when (and target (!= target *target*))
+        (return #t)
+        )
+      )
+    )
+    #f
+  )
+
+;; temporarily disable remote collision with other players (mainly used to avoid getting stuck inside eachother in special cases)
+(defun temp-disable-remote-collision ((ghost-seconds float))
+  (set! *remote-stuck-released* #t)
+  (set! *remote-stuck-release-timestamp* (+ (current-time) (seconds ghost-seconds)))
+  (logclear! (-> *target* control root-prim collide-with) (collide-kind target-remote))
+  (none)
+  )
+  
+;; get target by index
+(defun get-target ((idx int))
+  (if (= (-> *multiplayer-info* player_num) -1)
+    (if (= idx 0)
+      *target*
+      (the-as target #f)
+      )
+    (if (= (-> *multiplayer-info* player_num) idx)
+      *target*
+      (if (and (-> *remote-targets* idx) (nonzero? (-> *remote-targets* idx)) (handle->process (-> *remote-targets* idx)))
+        (the target (handle->process (-> *remote-targets* idx)))
+        (the-as target #f)
+        )
+      )
+    )
+  )
+
+;; get target by index only if target is marked as interactive
+(defun get-interactive-target ((idx int))
+  (if (= (-> *multiplayer-info* player_num) -1)
+    (if (= idx 0)
+      *target*
+      (the-as target #f)
+      )
+    (if (= (-> *multiplayer-info* player_num) idx)
+      *target*
+      (if (and (-> *remote-targets* idx) (nonzero? (-> *remote-targets* idx)) (is-interactive? idx) (handle->process (-> *remote-targets* idx)))
+        (the target (handle->process (-> *remote-targets* idx)))
+        (the-as target #f)
+        )
+      )
+    )
+  )
+
+;; returns closest interactive target to process
+(defun get-closest-interactive-target ((proc process-drawable))
+  (let ((closest-target *target*))
+    (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+      (let ((target (get-interactive-target tgt-idx)))
+        (if (and target proc (<= (vector-vector-distance (remote-target-pos 0 target) (-> proc root trans)) (vector-vector-distance (remote-target-pos 0 closest-target) (-> proc root trans))))
+            (set! closest-target target)
+          )
+        )
+      )
+    closest-target
+    )
+  )
+
+;; returns closest interactive target to vector
+(defun get-closest-interactive-target-to-vector ((vect vector))
+  (let ((closest-target *target*))
+    (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+      (let ((target (get-interactive-target tgt-idx)))
+        (if (and target vect (<= (vector-vector-distance (remote-target-pos 0 target) vect) (vector-vector-distance (remote-target-pos 0 closest-target) vect)))
+            (set! closest-target target)
+          )
+        )
+      )
+    closest-target
+    )
+  )
+
+;; returns closest interactive target with blue eco to process
+(defun get-closest-interactive-target-with-blue-eco ((proc process-drawable))
+  (let ((closest-target *target*))
+    (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+      (let ((target (get-interactive-target tgt-idx)))
+        (if (and target proc (send-event target 'query 'powerup (pickup-type eco-blue)) (<= (vector-vector-distance (remote-target-pos 0 target) (-> proc root trans)) (vector-vector-distance (remote-target-pos 0 closest-target) (-> proc root trans))))
+            (set! closest-target target)
+          )
+        )
+      )
+    (if (and (= closest-target *target*) (not (send-event *target* 'query 'powerup (pickup-type eco-blue))))
+      (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+        (let ((target (get-interactive-target tgt-idx)))
+          (if (and target proc (send-event target 'query 'powerup (pickup-type eco-blue)) (or (= closest-target *target*) (<= (vector-vector-distance (remote-target-pos 0 target) (-> proc root trans)) (vector-vector-distance (remote-target-pos 0 closest-target) (-> proc root trans)))))
+              (set! closest-target target)
+            )
+          )
+        )
+      )
+    closest-target
+    )
+  )
+
+;; check if remote target has pressed circle (for interactions that requires cirlce presses)
+(defun remote-target-fake-cpad-circle-pressed? ((remote-target target))
+    (and (target-is-interactive? remote-target) (= (-> remote-target state name) 'target-attack))
+  )
+
+;; returns if current target has given camera type
+(defun has-camera-type? ((camera-type symbol))
+  (and (-> *camera* child 0) (= (-> (the-as camera-slave (-> *camera* child 0)) state name) camera-type))
+  )
+
+;; check if camera is within distance of given target
+(defun is-camera-within-target-dist? ((target target) (dist float))
+  (and target (-> *camera* child 0) (< (vector-vector-distance (remote-target-pos 0 target) (-> (the-as camera-slave (-> *camera* child 0)) trans)) dist))
+  )
+
+;; deactivates remote target by index
+(defun deactivate-remote-target ((idx int))
+  (let ((remote-target (-> *remote-targets* idx)))
+    (when (and (-> *remote-targets* idx) (nonzero? (-> *remote-targets* idx)) (handle->process (-> *remote-targets* idx)))
+      (set! (-> *multiplayer-info* players idx mp_state) (mp-tgt-state mp-tgt-disconnected))
+      (set! (-> *multiplayer-info* players idx mp_state_check) (mp-tgt-state mp-tgt-disconnected))
+      (deactivate (handle->process remote-target))
+      )
+    )
+  )
+
+;; colors given target
+(defun color-target-rgb ((tgt process-drawable) (r float) (g float) (b float))
+  (set! (-> tgt draw color-mult r) r)
+  (set! (-> tgt draw color-mult g) g)
+  (set! (-> tgt draw color-mult b) b)
+  (none)
+  )
+
+;; colors target by pre defined color
+(defun color-target ((tgt process-drawable) (color tgt-color))
+  (case color
+    (((tgt-color normal))
+      (color-target-rgb tgt 1.0 1.0 1.0)
+      )
+    (((tgt-color white))
+      (color-target-rgb tgt 10.0 10.0 10.0)
+      )
+    (((tgt-color black))
+      (color-target-rgb tgt 0.1 0.1 0.1)
+      )
+    (((tgt-color red))
+      (color-target-rgb tgt 0.8 0.2 0.2)
+      )
+    (((tgt-color green))
+      (color-target-rgb tgt 0.0 1.2 0.0)
+      )
+    (((tgt-color blue))
+      (color-target-rgb tgt 0.0 0.5 2.0)
+      )
+    (((tgt-color yellow))
+      (color-target-rgb tgt 1.5 1.5 0.0)
+      )
+    (((tgt-color purple))
+      (color-target-rgb tgt 0.7 0.2 2.0)
+      )
+    (((tgt-color pink))
+      (color-target-rgb tgt 1.0 0.0 1.0)
+      )
+    (((tgt-color light-blue))
+      (color-target-rgb tgt 0.0 1.0 1.0)
+      )
+    ;; (((tgt-color holo))
+    ;;   (color-target-rgb tgt 
+    ;;     (rand-vu-float-range 0.0 5.0)
+    ;;     (rand-vu-float-range 0.0 5.0)
+    ;;     (rand-vu-float-range 0.0 5.0))
+    ;;   )
+    )
+  )
+
+;;This moves self to a provided coordinate
+(defun tp-target ((arg0 float) (arg1 float) (arg2 float))
+  (set! (-> (target-pos 0) x) (meters arg0))
+  (set! (-> (target-pos 0) y) (meters arg1))
+  (set! (-> (target-pos 0) z) (meters arg2))
+  )
+
+
+;; releases target from grab
+(defun safe-release-from-grab ()
+  ;;don't release if not grabbed (as this escapes certain states and cutscenes) and not if in freecam
+  (when (and (is-grabbed?) (not (has-camera-type? 'cam-free-floating)))
+    (process-release? *target*)
+    )
+  )
+
+;; get the distance a given target has moved over a period of time
+(defun remote-target-move-dist ((target target) (arg0 time-frame))
+  (when target
+    (let ((s5-0 (new-stack-vector0))
+          (f30-0 0.0)
+          (gp-0 0)
+          )
+      (let* ((v1-0 127)
+            (a1-6 (-> target control history-data (logand (+ (-> target control unknown-halfword00) v1-0) 127)))
+            )
+        (while (and (< (- (-> *display* base-frame-counter) (-> a1-6 time)) arg0) (> v1-0 0))
+          (vector+! s5-0 s5-0 (-> a1-6 trans))
+          (+! gp-0 1)
+          (+! v1-0 -1)
+          (set! a1-6 (-> target control history-data (logand (+ (-> target control unknown-halfword00) v1-0) 127)))
+          )
+        )
+      (vector-float/! s5-0 s5-0 (the float gp-0))
+      (let ((s4-0 (- 128 gp-0)))
+        (while (< s4-0 128)
+          (let ((v1-9 (-> target control history-data (logand (+ (-> target control unknown-halfword00) s4-0) 127))))
+            (+! f30-0 (vector-vector-distance s5-0 (-> v1-9 trans)))
+            )
+          (+! s4-0 1)
+          )
+        )
+      (/ f30-0 (the float gp-0))
+      )
+    )
+  )
+
+;; gives given eco type to given target index 
+(defun give-eco-to-target-idx ((idx int) (type int) (amount float))
+  (let ((target (get-interactive-target idx)))
+    (send-event target 'get-pickup type amount)
+    )
+  )
+  
+
+;; --- level checks ---
+
+
+;; get active level current target is within if any
+(defun get-target-active-level ((remote-target target))
+  (when target
+    (dotimes (s5-1 (-> *level* length))
+      (let ((s4-0 (-> *level* level s5-1)))
+        (when (and (= (-> s4-0 status) 'active) (point-in-boxes? s4-0 (-> remote-target root trans)))
+          (return (-> s4-0 name))
+          )
+        )
+      )
+    )
+  #f
+  )
+
+;; is given level alive
+(defun is-level-alive? ((level-name symbol))
+  (if (or 
+      (and (-> *load-state* want 0)
+        (= level-name (-> *load-state* want 0 name)) 
+        (case (-> *load-state* want 0 display?)
+          (('special 'special-vis #f) #f)
+          (else #t)
+          )
+        )
+      (and (-> *load-state* want 1)
+        (= level-name (-> *load-state* want 1 name)) 
+        (case (-> *load-state* want 1 display?)
+          (('special 'special-vis #f) #f)
+          (else #t)
+          )
+        )
+      )
+    #t
+    #f
+    )
+  )
+
+(defun is-level-alive-or-active? ((level-name string))
+  (or (and (-> *level* level 0) (name= (-> *level* level 0 name) level-name) (or (= (-> *level* level 0 status) 'alive) (= (-> *level* level 0 status) 'active)))
+      (and (-> *level* level 1) (name= (-> *level* level 1 name) level-name) (or (= (-> *level* level 1 status) 'alive) (= (-> *level* level 1 status) 'active)))
+    )
+  )
+
+;; checks if given target index's level is alive
+(defun is-target-current-level-alive? ((tgt-idx int))
+    (is-level-alive? (-> *multiplayer-info* players tgt-idx current_level))
+  )
+
+;; check if given target is in a fully loaded level
+(defun is-target-in-any-active-level? ((remote-target target))
+  (when target
+    (dotimes (s5-1 (-> *level* length))
+      (let ((s4-0 (-> *level* level s5-1)))
+        (if (and (= (-> s4-0 status) 'active) (point-in-boxes? s4-0 (-> remote-target root trans)))
+          (return #t)
+          )
+        )
+      )
+    )
+  #f
+  )
+
+
+(defun remote-target-in-close-by-environment? ((remote-target target))
+  (if 
+    ;(and (process-close? remote-target 500000.0) ;; prevents some crashing in recording tool, but causes remote targets to freeze if they're on zoomer and far away
+      (or 
+        (= remote-target *target*) 
+        (is-target-in-any-active-level? remote-target)  
+        (and (is-target-current-level-alive? (the int (-> remote-target saved-owner))) (< (remote-target-move-dist remote-target (seconds 1.5)) 250000.0))
+        )
+      ;)
+    #t
+    #f
+    )
+  )
+
+;; returns true if all citadel cells have been collected
+(defun has-all-citadel-cells? ()
+  (and 
+    (task-closed? (game-task citadel-sage-green) (task-status need-resolution))
+    (task-closed? (game-task citadel-sage-blue) (task-status need-resolution))
+    (task-closed? (game-task citadel-sage-red) (task-status need-resolution))
+    (task-closed? (game-task citadel-sage-yellow) (task-status need-resolution))
+    )
+  )
+
+
+;; --- team specific logic ---
+
+
+;; checks if all teammates are all in the same level
+(defun all-teammates-in-same-level? ()
+  (let ((level-name (-> (level-get-target-inside *level*) name)))
+    (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+      (if (and
+            (is-interactive? tgt-idx)
+            (is-teammate? tgt-idx)
+            (not (is-same-level? level-name (-> *multiplayer-info* players tgt-idx current_level)))
+          )
+        (return #f)
+        )
+      )
+    )
+  #t
+  )
+
+;; checks if all teammates are on the levels zoomer
+(defun all-teammates-on-level-racer? ()
+  (let ((level-name (-> (level-get-target-inside *level*) name)))
+    (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+      (let ((target (get-interactive-target tgt-idx)))
+        (if (and
+              (is-interactive? tgt-idx)
+              (is-teammate? tgt-idx)
+              (or (not (is-same-level? level-name (-> *multiplayer-info* players tgt-idx current_level)))
+                (not (target-on-racer? target))
+              )
+            )
+          (return #f)
+          )
+        )
+      )
+    )
+  #t
+  )
+
+;; get the current cell count of a team
+(defun get-team-cell-count ()
+  (let ((team-cell-count 0))
+    (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+      (if (and
+            (is-interactive? tgt-idx)
+            (is-teammate? tgt-idx)
+          )
+          (set! team-cell-count (+ team-cell-count (-> *multiplayer-info* players tgt-idx cells_collected)))
+        )
+      )
+    team-cell-count
+    )
+  )
+
+;; get amount of teams
+(defun get-team-count ()
+  (let ((team-count 0))
+    (dotimes (team-id MAX_TEAM_COUNT)
+      (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+        (when (and
+              (!= (-> *multiplayer-info* players tgt-idx mp_state) (mp-tgt-state mp-tgt-disconnected))
+              (= (-> *multiplayer-info* players tgt-idx team_id) team-id)
+            )
+            (set! team-count (+ team-count 1))
+            (goto player-count-end)
+          )
+        )
+        (label player-count-end)
+      )
+    team-count
+    )
+  )
+
+;; checks if self team has the most cells
+(defun team-has-most-cells? ()
+  (if (= -1 (-> *self-player-info* team_id))
+    (return #t)
+    )
+  (if (= (-> *multiplayer-info* game free_for_all) 1)
+    (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+      (if (and
+            (is-interactive? tgt-idx)
+            (> (-> *multiplayer-info* players tgt-idx cells_collected) (-> *self-player-info* cells_collected))
+          )
+        (return #f)
+        )
+      )
+    (let ((team-cell-count (get-team-cell-count)))
+      (dotimes (team-id MAX_TEAM_COUNT)
+        (if (!= team-id (-> *self-player-info* team_id))
+          (let ((other-team-cell-count 0))
+            (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
+              (when (and
+                    (is-interactive? tgt-idx)
+                    (= (-> *multiplayer-info* players tgt-idx team_id) team-id)
+                  )
+                  (set! other-team-cell-count (+ other-team-cell-count (-> *multiplayer-info* players tgt-idx cells_collected)))
+                  (if (> other-team-cell-count team-cell-count)
+                    (return #f)
+                    )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+    #t
+  )
+  
+(defun set-zoomer-wait-mode ()
+  (set! (-> *racer-mods* target-speed) 13840.0)
+  (set! (-> *racer-air-mods* target-speed) 13840.0)
+  (none)
+  )
+(defun set-zoomer-full-mode ()
+  (set! (-> *racer-mods* target-speed) 163840.0)
+  (set! (-> *racer-air-mods* target-speed) 163840.0)
+  (none)
+  )
+
+;;This turns on play hints
+(defun turnonplayhints ()
+  (set! (-> *setting-control* default play-hints) #t))
+
+;;This turns off playhints
+(defun turnoffplayhints ()
+  (set! (-> *setting-control* default play-hints) #f))
+
+(defun check-allow-final-boss? ()
+  *allow-final-boss?*
+)
+
+(defun check-prevent-citadel-skip ()
+  (when (and (= (-> *multiplayer-info* game citadel_skip_version) (citadel-skip-version patched)) (not (has-all-citadel-cells?)))
+    (if (name= (-> *game-info* current-continue name) "citadel-elevator")
+      (set-continue! *game-info* "citadel-start")
+      )
+    (if (name= (-> (level-get-target-inside *level*) name) "finalboss")
+      (start 'play (get-continue-by-name *game-info* "citadel-elevator"))
+      )
+    )
+
+  (when (and *allow-one-time-citadel-skip?* 
+        (= (-> *multiplayer-info* game citadel_skip_version) (citadel-skip-version shared)) 
+        (name= (-> *game-info* current-continue name) "citadel-start")
+        (task-closed? (game-task citadel-sage-green) (task-status need-resolution))
+      )
+      (set-continue! *game-info* "citadel-elevator")
+    )
+  )
+
+
+;; --- actor logic ---
+
+
+;; resets given actor
+(defun reset-specific-actor ((actor-name string))
+  (let* ((actor-obj (process-by-ename actor-name)))
+    (when (-> actor-obj entity)
+      (kill! (-> actor-obj entity))
+      (update-perm! (-> actor-obj entity extra perm) 'life (the-as entity-perm-status 623))
+      )
+    )
+    (none)
+  )
+
+;; resets all lodaed warp gates
+(defun reset-loaded-warp-gates ()
+  (let ((gate-training (process-by-ename "warp-gate-switch-8"))
+        (gate-village1 (process-by-ename "warp-gate-switch-3"))
+        (gate-village2 (process-by-ename "warp-gate-switch-7"))
+        (gate-village3 (process-by-ename "warp-gate-switch-2"))
+        (gate-citadel (process-by-ename "warp-gate-switch-12"))
+        (gate-active #f)
+      )
+    (when gate-training
+      (if (and (-> gate-training child 0) (= (-> (the-as process-drawable (-> gate-training child 0)) state name) 'active))
+        (set! gate-active #t)
+        )
+      (reset-specific-actor "warp-gate-switch-8")
+      (reset-specific-actor "training-part-1")
+      )
+    (when gate-village1
+      (if (and (-> gate-village1 child 0) (= (-> (the-as process-drawable (-> gate-village1 child 0)) state name) 'active))
+        (set! gate-active #t)
+        )
+      (reset-specific-actor "warp-gate-switch-3")
+      (reset-specific-actor "villagea-part-1")
+      )
+    (when (and gate-village2 (task-closed? (game-task village2-levitator) (task-status need-reminder-a)))
+      (if (and (-> gate-village2 child 0) (= (-> (the-as process-drawable (-> gate-village2 child 0)) state name) 'active))
+        (set! gate-active #t)
+        )
+      (reset-specific-actor "warp-gate-switch-7")
+      (reset-specific-actor "villageb-part-55")
+      )
+    (when (and gate-village3 (task-closed? (game-task village3-button) (task-status need-introduction)))
+      (if (and (-> gate-village3 child 0) (= (-> (the-as process-drawable (-> gate-village3 child 0)) state name) 'active))
+        (set! gate-active #t)
+        )
+      (reset-specific-actor "warp-gate-switch-2")
+      (reset-specific-actor "villagec-part-32")
+      )
+    (when (and gate-citadel (task-closed? (game-task village4-button) (task-status need-reward-speech)))
+      (if (and (-> gate-citadel child 0) (= (-> (the-as process-drawable (-> gate-citadel child 0)) state name) 'active))
+        (set! gate-active #t)
+        )
+      (reset-specific-actor "warp-gate-switch-12")
+      (reset-specific-actor "citb-part-1")
+      )
+
+    (if (and (name= (-> *target* state name) 'target-grab) gate-active)
+      (safe-release-from-grab)
+      )
+    )
+    (none)
+  )
+
+;; kills given powercell if loaded
+(defun kill-fuel-cell ((cell-name string))
+  (let ((cell (process-by-ename cell-name)))
+    (when cell
+      (process-entity-status! (the-as fuel-cell cell) (entity-perm-status dead) #t)
+      (deactivate cell)
+      )
+    )
+  )
+
+;; kills all instances of cell, used for flies in case of multiple cells
+(defun kill-all-fuel-cell-instances ((cell-name string))
+  (process-entity-status! (the-as fuel-cell (process-by-ename cell-name)) (entity-perm-status dead) #t)
+  (kill-by-name cell-name *active-pool*)
+  )
+
+;; kills powercell through parent entity
+(defun kill-fuel-cell-child ((name string))
+  (let ((proc (the-as process (process-by-ename name))))
+    (when (and proc (-> proc child))
+      (let ((child (ppointer->process (-> proc child))))
+        (when (type-type? (-> child type) fuel-cell)
+          (process-entity-status! (the-as fuel-cell child) (entity-perm-status dead) #t)
+          (deactivate child)
+          )
+        )
+      )
+    )
+    (none)
+  )
+
+;; kills powercell through borther entity
+(defun kill-fuel-cell-brother ((name string))
+  (let ((proc (the-as process (process-by-ename name))))
+    (when (and proc (-> proc brother))
+      (let ((brother (ppointer->process (-> proc brother))))
+        (when (type-type? (-> brother type) fuel-cell)
+          (process-entity-status! (the-as fuel-cell brother) (entity-perm-status dead) #t)
+          (deactivate brother)
+          )
+        )
+      )
+    )
+    (none)
+  )
+
+;; marks entity as dead to prevent respawns and kill
+(defun mark-dead-and-kill ((name string))
+  (let ((proc (process-by-ename name)))
+    (when proc
+      (process-entity-status! proc (entity-perm-status dead) #t)
+      (deactivate proc)
+      )
+    )
+  )
+
+;; kills enemy
+(defun kill-enemy ((enemy-name string))
+  (let ((cur-enemy (process-by-ename enemy-name)))
+    (when cur-enemy
+      (cond
+        ((type-type? (-> cur-enemy type) pelican)
+          (let ((a0-2 (handle->process (-> (the-as pelican cur-enemy) fuel-cell))))
+            (if (and a0-2 (!= (-> (the-as pelican cur-enemy) state name) 'pelican-circle))
+                (send-event a0-2 'trans (-> (the-as pelican cur-enemy) root trans))
+                )
+            )
+          (if (!= (-> (the-as pelican cur-enemy) state name) 'pelican-explode)
+            (go-process cur-enemy pelican-explode #f)
+            )
+          )
+        ((type-type? (-> cur-enemy type) robber)
+          (go-process cur-enemy robber-die)
+          (process-entity-status! cur-enemy (entity-perm-status complete) #t)
+          )
+        ((type-type? (-> cur-enemy type) ram)
+          (when (and (-> cur-enemy child) (type-type? (-> cur-enemy child 0 type) ram-boss))
+            (go-virtual-process (the-as ram-boss (-> cur-enemy child 0)) nav-enemy-die)
+            (go-process cur-enemy ram-fun-idle)
+            )
+          )
+        ((type-type? (-> cur-enemy type) gnawer)
+          (if (not (or (= (-> cur-enemy state) gnawer-dying-give-pickups) (= (-> cur-enemy state) gnawer-put-items-at-dest) (= (-> cur-enemy state) gnawer-give-fuel-cell)))
+            (go-process cur-enemy gnawer-die)
+            )
+          )
+        (else
+          (send-event cur-enemy 'die)
+          )
+        )
+      )
+    )
+    (none)
+  )
+
+;; kills klaww
+(defun kill-ogreboss ()
+  (let ((boss (process-by-ename "ogreboss-1"))
+              (bridge (process-by-ename "ogre-bridge-1"))
+              )
+    (when (and boss (!= (-> boss state name) 'ogreboss-die)  (!= (-> boss state name) 'ogreboss-dead))
+      (process-entity-status! boss (entity-perm-status complete) #t)
+      (cond
+        ((= (-> boss state name) 'ogreboss-stage1)
+          (reset-specific-actor "ogreboss-1")
+          (reset-specific-actor "ogre-step-a-4")
+          (reset-specific-actor "ogre-step-a-3")
+          (reset-specific-actor "ogre-step-b-2")
+          (reset-specific-actor "ogre-step-a-2")
+          (reset-specific-actor "ogre-step-d-1")
+          (reset-specific-actor "ogre-step-c-1")
+          (reset-specific-actor "ogre-step-b-1")
+          (reset-specific-actor "ogre-step-a-1")
+          (ogreboss-trigger-steps)
+          )
+        (else
+          (go-process boss ogreboss-die)
+          )
+        )
+      (when (has-camera-type? 'cam-circular)
+        (send-event *camera* 'point-of-interest #f)
+        )
+      )
+    (when bridge
+      (process-entity-status! bridge (entity-perm-status complete) #t)
+      (if (or (name= (-> bridge state name) "ogre-bridge-idle") (name= (-> bridge state name) "ogre-bridge-break"))
+        (go-process bridge ogre-bridge-activate)
+        )
+      )
+    )
+  )
+
+;; gets the current phase of klaww
+(defun get-ogreboss-phase ((level float) (stage int))
+  (case level
+      ((0.0)
+        (case stage
+          ((1) 7.0)
+          ((2) 6.0)
+          ((3) 5.0)
+          )
+        )
+      ((1.0)
+        (case stage
+          ((1) 4.0)
+          ((2) 3.0)
+          ((3) 2.0)
+          )
+        )
+      ((2.0)
+        (case stage
+          ((1) 1.0)
+          ((2) 0.0)
+          )
+        )
+    )
+  )
+
+;; moves given boss to given phase, set force-phase as #t to be able to move back phases
+(defun move-boss-to-phase ((boss-name string) (to-phase int) (force-phase symbol))
+  (if (= to-phase -1)
+    (return #f)
+    )
+  (let ((boss-enemy (process-by-ename boss-name)))
+    (when boss-enemy
+      (cond
+
+        ((type-type? (-> boss-enemy type) plant-boss)
+          (when (and (<= 0 to-phase) (> 3 to-phase) (or force-phase (> (-> (the-as plant-boss boss-enemy) health) to-phase)))
+              (set! (-> (the-as plant-boss boss-enemy) health) (the float (+ to-phase 1)))
+              (if (not force-phase)
+                (go-process boss-enemy plant-boss-hit #f)
+                )
+            )
+          )
+
+
+        ((type-type? (-> boss-enemy type) ogreboss)
+          (let ((boss-level (case to-phase
+                            ((0 1) 2)
+                            ((2 3 4) 1)
+                            ((5 6 7) 0)
+                            ))
+                (bridge (the-as ogre-bridge (process-by-ename "ogre-bridge-1")))
+              )
+            (when bridge 
+              (if force-phase 
+                (set! (-> (the-as ogreboss boss-enemy) level) (the float boss-level)) ;; if force phase only change ogre level
+                (when (and (<= (-> (the-as ogreboss boss-enemy) level) boss-level) ;; otherwise run the logic as normal
+                        (not (name= (-> boss-enemy state name) "ogreboss-die")) 
+                        (not (name= (-> boss-enemy state name) "ogreboss-dead"))
+                        )
+                  (if (and (<= 0 boss-level) (>= 2 boss-level))
+                    (set! (-> bridge dead-joint-count) (* boss-level 4))
+                    )
+                  (let ((boss-getting-hit #f))
+                    (case to-phase
+                      ((0 3 6) (when (or (name= (-> boss-enemy state name) "ogreboss-stage1")
+                                      (name= (-> boss-enemy state name) "ogreboss-intro")
+                                      (name= (-> boss-enemy state name) "ogreboss-wait-for-player")
+                                    )
+                                (go-process boss-enemy ogreboss-stage2)
+                                (if (or (name= (-> bridge state name) "ogre-bridge-idle") (name= (-> bridge state name) "ogre-bridge-break"))
+                                  (go-process bridge ogre-bridge-activate)
+                                  )
+                                ))
+                      ((1 4 7) (when (or (< (-> (the-as ogreboss boss-enemy) level) boss-level) 
+                                        (name= (-> boss-enemy state name) "ogreboss-intro")
+                                        (name= (-> boss-enemy state name) "ogreboss-wait-for-player")
+                                      )
+                                (if (not (-> (the-as ogreboss boss-enemy) boulder))
+                                  (go-process boss-enemy ogreboss-stage1)
+                                  )
+                                ))
+                      ((2 5)  (if (and (name= (-> boss-enemy state name) "ogreboss-stage2") (name= (-> bridge state name) "ogre-bridge-activated"))
+                                    (go-process bridge ogre-bridge-break)
+                                )
+                              (cond
+                                ((or (name= (-> boss-enemy state name) "ogreboss-stage3-shuffle") (name= (-> boss-enemy state name) "ogreboss-stage2"))
+                                  (set! boss-getting-hit #t)
+                                  (go-process boss-enemy ogreboss-stage3-hit)
+                                  )
+                                ((not (name= (-> boss-enemy state name) "ogreboss-stage3-hit"))
+                                  (go-process boss-enemy ogreboss-stage1))
+                                  )
+                                )
+                      )
+                    (if (and (not boss-getting-hit) (<= 0 boss-level) (>= 2 boss-level) (!= (-> (the-as ogreboss boss-enemy) level) (the float boss-level)))
+                      (+! (-> (the-as ogreboss boss-enemy) level) (- (the float boss-level) (-> (the-as ogreboss boss-enemy) level)))
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+
+
+        ((type-type? (-> boss-enemy type) robotboss)
+          (let ((vent (process-by-ename "ecovent-274")))
+            ;; ensures blue eco vent works
+            (when (name= (-> boss-enemy state name) "robotboss-blue-wait")
+              (let ((a1-0 (new 'stack-no-clear 'event-message-block)))
+                (set! (-> a1-0 from) boss-enemy)
+                (set! (-> a1-0 num-params) 0)
+                (set! (-> a1-0 message) 'show)
+                (let ((t9-1 send-event-function)
+                      (v1-1 (-> (the-as robotboss boss-enemy) alts 11))
+                      )
+                  (t9-1
+                    (if v1-1
+                        (-> v1-1 extra process)
+                        )
+                    a1-0
+                    )
+                  )
+                )
+              )
+            (when (or force-phase (and vent
+                      (not (name= (-> boss-enemy state name) "robotboss-daxter-sacrifice-movie"))
+                      (not (name= (-> boss-enemy state name) "robotboss-white-eco-movie"))
+                      (not (name= (-> boss-enemy state name) "robotboss-yellow-dark-bomb-wait"))
+                      (not (name= (-> boss-enemy state name) "robotboss-yellow-dark-bomb"))
+                ))
+              (case to-phase
+                ((0) 
+                      (if (= (-> (the-as robotboss boss-enemy) children-spawned) 0) (go-process vent vent-blocked))
+                      (go-process boss-enemy robotboss-yellow-dark-bomb)
+                      )
+                ((1) (when (or force-phase
+                            (and (not (name= (-> boss-enemy state name) "boss-enemy robotboss-yellow-dark-bomb"))
+                                (not (name= (-> boss-enemy state name) "robotboss-yellow-wait"))
+                                (not (name= (-> boss-enemy state name) "robotboss-yellow"))
+                        ))
+                      ;; depspawn bombs from end phase if setback from death
+                      (when force-phase
+                        (dotimes (child-idx (-> (the-as robotboss boss-enemy) children-spawned))
+                          (deactivate (-> boss-enemy child 0))
+                          )
+                        (if (and (-> boss-enemy child 0) (type-type? (-> boss-enemy child 0 type) light-eco-mother))
+                          (deactivate (-> boss-enemy child 0))
+                          )
+                        (set! (-> (the-as robotboss boss-enemy) children-spawned) 0)
+                        )
+                      (if (= (-> (the-as robotboss boss-enemy) children-spawned) 0) (go-process vent vent-blocked))
+                      (go-process boss-enemy robotboss-yellow)
+                      ))
+                ((2) (when (or force-phase
+                            (and (not (name= (-> boss-enemy state name) "boss-enemy robotboss-yellow-dark-bomb"))
+                                (not (name= (-> boss-enemy state name) "robotboss-yellow-wait"))
+                                (not (name= (-> boss-enemy state name) "robotboss-yellow"))
+                                (not (name= (-> boss-enemy state name) "robotboss-red-dark-bomb-wait"))
+                                (not (name= (-> boss-enemy state name) "robotboss-red-dark-bomb"))
+                        ))
+                      (go-process vent vent-wait-for-touch)
+                      (go-process boss-enemy robotboss-red-dark-bomb)
+                      ))
+                ((3) (when (or force-phase
+                            (name= (-> boss-enemy state name) "robotboss-blue-wait")
+                            (name= (-> boss-enemy state name) "robotboss-blue-dark-bomb")
+                            (name= (-> boss-enemy state name) "robotboss-blue-dark-bomb-wait")
+                            (name= (-> boss-enemy state name) "robotboss-green")
+                            (name= (-> boss-enemy state name) "robotboss-green-wait")
+                            (name= (-> boss-enemy state name) "robotboss-green-dark-bomb")
+                            (name= (-> boss-enemy state name) "robotboss-green-dark-bomb-wait")
+                        ) 
+                      (if (= (-> (the-as robotboss boss-enemy) children-spawned) 0) (go-process vent vent-blocked))
+                      (go-process boss-enemy robotboss-red)
+                      ))
+                ((4) (when (or force-phase
+                            (name= (-> boss-enemy state name) "robotboss-blue-wait")
+                            (name= (-> boss-enemy state name) "robotboss-blue-dark-bomb")
+                            (name= (-> boss-enemy state name) "robotboss-blue-dark-bomb-wait")
+                            (name= (-> boss-enemy state name) "robotboss-green")
+                            (name= (-> boss-enemy state name) "robotboss-green-wait")
+                        ) 
+                      (go-process vent vent-wait-for-touch)
+                      (go-process boss-enemy robotboss-green-dark-bomb)
+                      ))
+                ((5) (when (or force-phase
+                            (name= (-> boss-enemy state name) "robotboss-blue-wait")
+                            (name= (-> boss-enemy state name) "robotboss-blue-dark-bomb")
+                            (name= (-> boss-enemy state name) "robotboss-blue-dark-bomb-wait")
+                        ) 
+                      (if (= (-> (the-as robotboss boss-enemy) children-spawned) 0) (go-process vent vent-blocked))
+                      (go-process boss-enemy robotboss-green)
+                      ))
+                ((6) (when (or force-phase 
+                            (name= (-> boss-enemy state name) "robotboss-blue-wait")
+                      )
+                       (go-process boss-enemy robotboss-blue-dark-bomb)
+                       (go-process vent vent-wait-for-touch)
+                      ))
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  (if (> *current-boss-phase* to-phase)
+    (set! *current-boss-phase* to-phase)
+    )
+  (none)
+  )
+
+;; deactivates race ring
+(defun deactivate-ring ((ring-name string))
+  (let ((ring (process-by-ename ring-name)))
+    (if ring 
+      (go-process ring race-ring-idle)
+      )
+    )
+  )
+
+;; breaks given create if loaded
+(defun break-crate ((crate-name string))
+  (let* ((obj-crate (process-by-ename crate-name)))
+    (when obj-crate
+      (if (not (or (name= (-> (the-as crate obj-crate) state name) "die") (name= (-> (the-as crate obj-crate) state name) "special-contents-die")))
+        (go-virtual-process (the-as crate obj-crate) die #f 0)
+        )
+      )
+    )
+    (none)
+  )
+
+;; kills given orb if loaded
+(defun kill-orb ((money-name string))
+  (let ((orb (process-by-ename money-name)))
+    (when orb
+      (process-entity-status! (the-as money orb) (entity-perm-status dead) #t)
+      (deactivate orb)
+      )
+    )
+  )
+
+;; kills one orb from given cache if loaded
+(defun kill-cache-orb ((cache-name string))
+  (let* ((orb-cache (the-as orb-cache-top (process-by-ename cache-name))))
+    (when (-> orb-cache state)
+      (case (-> orb-cache state)
+        ((orb-cache-top-activate)
+          (if (and (>= (- (-> orb-cache money) 1) 0) (handle->process (-> orb-cache money-list (- (-> orb-cache money) 1))))
+            (deactivate (handle->process (-> orb-cache money-list (- (-> orb-cache money) 1))))
+            )
+          )
+        ((orb-cache-top-idle)
+          (when (>= (- (-> orb-cache money) 1) 0)
+            (set! (-> orb-cache money) (- (-> orb-cache money) 1))
+            (set! (-> orb-cache entity extra perm user-int16 0) (- 15 (-> orb-cache money)))
+            )
+          )
+        )
+      )
+      (when (and orb-cache (<= (-> orb-cache money) 0))
+        (process-entity-status! orb-cache (entity-perm-status complete) #f)
+        (go-process orb-cache orb-cache-top-complete #t)
+        )
+    )
+    (none)
+  )
+
+;; kills one orb from plant boss if loaded
+(defun kill-plant-boss-orb ()
+  (let ((boss (the-as plant-boss (process-by-ename "plant-boss-3"))))
+    (when boss
+      (if (handle->process (-> boss money))
+        (deactivate (handle->process (-> boss money)))
+        )
+      (if (< (-> boss entity extra perm user-int8 1) 5)
+        (+! (-> boss entity extra perm user-int8 1) 1)
+        )
+      )
+    )
+    (none)
+  )
+
+;; kills one gnawer orb from given gnawer if loaded
+(defun kill-gnawer-orb ((gnawer-name string))
+  (let ((gnawer (the-as gnawer (process-by-ename gnawer-name))))
+    (when gnawer
+      ;; kill if alive
+      (when (not (or (= (-> gnawer state) gnawer-dying-give-pickups) (= (-> gnawer state) gnawer-put-items-at-dest) (= (-> gnawer state) gnawer-give-fuel-cell)))
+        (process-entity-status! gnawer (entity-perm-status bit-3) #t)
+        (process-entity-status! gnawer (entity-perm-status complete) #t)
+        (logior! (-> gnawer entity extra perm status) (entity-perm-status user-set-from-cstage))
+        (set! (-> gnawer entity extra perm user-int16 0) (the-as int (-> gnawer money-mask)))
+        )
+      (when (and (nonzero? (-> gnawer entity extra perm user-uint16 0)) (type-type? (-> (the-as process-drawable (-> gnawer child 0)) type) money))
+        (gnawer-method-30 gnawer (the-as process-drawable (-> gnawer child 0)))
+        (reset-specific-actor gnawer-name)
+        )
+      )
+    )
+    (none)
+  )
+
+;; kills one orb from given crate if loaded
+(defun kill-crate-orb ((crate-name string))
+  (let* ((obj-crate (the-as crate (process-by-ename crate-name))))
+    (when obj-crate
+      (cond
+        ((name= (-> obj-crate state name) "special-contents-die") ;; when in orb collect phase
+
+          (when (>= (-> obj-crate entity extra perm user-int8 0) 1) ;; all orbs have not been collected
+            (set! (-> obj-crate entity extra perm user-int8 1) (+ (-> obj-crate entity extra perm user-int8 1) 1))
+            (+! (-> obj-crate child-count) -1)
+
+            ;; depspawn orb if exists
+            (if (-> obj-crate child 0)
+              ((method-of-type money deactivate) (the-as money (-> obj-crate child 0)))
+              )
+
+            ;; mark as completed if done
+            (when (or (= (-> obj-crate entity extra perm user-int8 1) 0) (= (-> obj-crate entity extra perm user-int8 1) (float->int (-> (the-as crate obj-crate) fact pickup-amount)))) ;; if no orbs are left
+                (set! (-> obj-crate entity extra perm user-int8 1) 0)
+                (process-entity-status! obj-crate (entity-perm-status bit-4) #f)
+                (process-entity-status! obj-crate (entity-perm-status dead) #t)
+                (process-entity-status! obj-crate (entity-perm-status complete) #t)
+                ((method-of-type crate deactivate) obj-crate)
+              )
+            )
+          )
+        (else
+          (set! (-> obj-crate fact pickup-amount) (- (-> obj-crate fact pickup-amount) 1))
+          (when (<= (-> obj-crate fact pickup-amount) 0)
+            (set! (-> obj-crate entity extra perm user-int8 1) 0)
+            (process-entity-status! obj-crate (entity-perm-status bit-4) #f)
+            (process-entity-status! obj-crate (entity-perm-status dead) #t)
+            (process-entity-status! obj-crate (entity-perm-status complete) #t)
+            ((method-of-type crate deactivate) obj-crate)
+            )
+          )
+        )
+      )
+    )
+    (none)
+  )
+
+;; kills the scoutfly of given scoutfly crate if loaded
+(defun kill-crate-buzzer ((crate-name string) (run-pickup symbol) (kill-if-not-buzzer symbol))
+  (let* ((obj-crate (process-by-ename crate-name))
+        (is-cell-buzzer #f)) ;; swap to check if cell buzzer so it checks programatically if the count is 7
+
+    (when (and run-pickup obj-crate (-> (the-as crate obj-crate) child 0))
+      (process-entity-status! (the-as crate obj-crate) (entity-perm-status dead) #t)
+
+      (let* ((buzzer (the-as buzzer (-> (the-as crate obj-crate) child 0)))
+            (s5-2 (logand (the int (-> buzzer fact pickup-amount)) #xffff))
+            (s4-1 (get-task-control (the-as game-task s5-2)))
+            )
+
+        (go-virtual-process buzzer pickup #f (process->handle buzzer))
+        
+        (when (and (= (get-reminder s4-1 0) 127) (and (-> buzzer entity) (not (task-complete? *game-info* (the-as game-task s5-2)))))
+          (set! is-cell-buzzer #t)
+          )
+        )
+      )
+
+    ;; depspawn buzzer if exists
+    (if (and obj-crate kill-if-not-buzzer (not is-cell-buzzer) (name= (-> (the-as crate obj-crate) state name) "special-contents-die") (-> (the-as crate obj-crate) child 0))
+      ((method-of-type buzzer deactivate) (the-as buzzer (-> (the-as crate obj-crate) child 0)))
+      )
+    ;; depspawn crate
+    (if (and obj-crate (not is-cell-buzzer) (name= (-> (the-as crate obj-crate) state name) "wait"))
+      ((method-of-type crate deactivate) (the-as crate obj-crate))
+      )
+
+    )
+    (none)
+  )
+
+;; kills powercell belonging of given crate if loaded
+(defun kill-crate-cell ((crate-name string))
+  (let* ((obj-crate (the-as crate (process-by-ename crate-name))))
+    (when obj-crate
+      (process-entity-status! obj-crate (entity-perm-status bit-4) #f)
+      (process-entity-status! obj-crate (entity-perm-status dead) #t)
+      (process-entity-status! obj-crate (entity-perm-status complete) #t)
+      (cleanup-for-death obj-crate)
+      (if (not (or (name= (-> (the-as crate obj-crate) state name) "die") (name= (-> (the-as crate obj-crate) state name) "special-contents-die")))
+        ((method-of-type crate deactivate) obj-crate)
+        (kill-fuel-cell-child crate-name)
+        )
+      )
+    )
+  )
+
+;; runs the pickup logic of eco belonging to given crate
+(defun pickup-crate-eco ((crate-name string))
+  (let* ((obj-crate (process-by-ename crate-name)))
+
+    (if (name= (-> (the-as crate obj-crate) state name) "wait")
+      (break-crate crate-name)
+      )
+
+    ;; pickup eco if exists
+    (when (and (name= (-> (the-as crate obj-crate) state name) "special-contents-die") (-> (the-as crate obj-crate) child 0))
+      (go-virtual-process (the-as eco-collectable (-> (the-as crate obj-crate) child 0)) pickup #f (the-as handle #f))
+      )
+    )
+    (none)
+  )
+
+;; runs the pickup logic of given eco
+(defun pickup-eco ((eco-ename string))
+  (let* ((obj-eco (process-by-ename eco-ename)))
+    (when (-> obj-eco name)
+        (go-virtual-process (the-as eco-collectable obj-eco) pickup #f (process->handle (the-as eco-collectable obj-eco)))
+      )
+    )
+  (none)
+  )
+
+;; set the amount of money you have in a level and adjust total by given amount
+(defun set-level-money ((level string) (money int) (total-adjust float))
+  ;; get the level index
+  (let ((level-idx (-> *level-task-data-remap* (+ (-> (lookup-level-info (string->symbol level)) index) -1))))
+    ;; increment the level money count
+    (set! (-> *target* game money-per-level level-idx) money)
+    ;; unlock level in menu
+    (if (and (>= level-idx 0)
+               (< level-idx (-> *level-task-data-remap* length))
+               (zero? (-> *game-info* level-opened (-> *level-task-data-remap* level-idx)))
+               )
+          (set! (-> *game-info* level-opened (-> *level-task-data-remap* level-idx)) (the-as uint 1))
+          )
+    ;; increment our total money in the game (out of the 2000 max orbs)
+    (+! (-> *target* game money-total) total-adjust)
+    ;; if we have all the money in our level, display the all orbs graphic
+    (if (= (-> *target* game money-per-level level-idx) (-> (get-game-count level-idx) money-count))
+        (activate-orb-all level-idx)
+        )
+    )
+    (none)
+  )
+
+;; give buzzer by id from level
+(defun give-buzzer-from-level ((buzzer-id float) (level string))
+    (cond
+      ((is-same-level? (-> (level-get-target-inside *level*) name) (string->symbol level))
+        (pickup-collectable! (-> *target* fact) (pickup-type buzzer) buzzer-id (process->handle *target*))
+        )
+      (else
+        (adjust (-> *target* game) 'buzzer buzzer-id (process->handle *target*))
+        (sound-play "cursor-options")
+        )
+      )
+      (none)
+  )
+
+;; breaks given eco vent rock
+(defun break-eco-vent-rock ((rock-name string))
+  (let ((rock (the-as ecoventrock (process-by-ename rock-name))))
+    (when (and rock (name= (-> rock state name) "ecoventrock-idle"))
+      (go-process rock ecoventrock-break #f)
+      )
+    )
+  )
+
+;; updates fish stats, for status set 0 to update missed fish and 1 to update caught fish
+(defun set-fish-stats ((amount float) (status float))
+  (let ((fish-game (the-as fisher (process-by-ename "fisher-1"))))
+    (when fish-game
+      (let ((amount-diff (- amount (if (= status 1) (-> fish-game caught) (-> fish-game missed)))))  
+        (when (> amount-diff 0)
+          (if (= status 1)
+            (send-event fish-game 'fisher-fish-caught (the int amount-diff))
+            (send-event fish-game 'fisher-fish-die (the int amount-diff))
+            )
+          )
+        )
+      )
+    )
+    (none)
+  )
+
+;; releases target from periscope if in periscope state
+(defun check-release-from-periscope ((completed-periscope periscope))
+  (when (and *target* (name= (-> *target* state name) "target-periscope") (process-close? completed-periscope 180000.0))
+    (send-event *target* 'end-mode)
+    (set! *camera-init-mat* (-> completed-periscope old-camera-matrix))
+    (send-event *camera* 'change-state *camera-base-mode* 0)
+    (set! *camera-init-mat* #f)
+    )
+  )
+
+;; activate given periscope
+(defun periscope-activate-by-name ((periscope-name string))
+  (if (string= periscope-name "periscope-16") ;; periscope-16 doesn't exist but is used to check if it's the last mirror activated
+    (let ((last-periscope (the-as periscope (process-by-ename "periscope-15"))))
+      (when (and last-periscope (!= (-> (the-as periscope last-periscope) entity extra perm status) (entity-perm-status complete)))
+        (set! (-> (the-as periscope last-periscope) entity extra perm status) (entity-perm-status complete))
+        (check-release-from-periscope last-periscope)
+        (go-process (the-as periscope last-periscope) periscope-power-on)
+        )
+      )
+    (let ((next-periscope (the-as periscope (process-by-ename periscope-name))))
+      (when next-periscope
+        (let ((current-periscope (ppointer->process (-> next-periscope brother))))
+          (when current-periscope
+            (cond
+              ((type-type? (-> current-periscope type) periscope)
+                (when (!= (-> (the-as periscope current-periscope) entity extra perm status) (entity-perm-status complete))
+                  (set! (-> (the-as periscope current-periscope) entity extra perm status) (entity-perm-status complete))
+                  (go-process next-periscope periscope-activate)
+                  (check-release-from-periscope (the-as periscope current-periscope))
+                  (go-process (the-as periscope current-periscope) periscope-power-on)
+                  )
+                )
+              ((type-type? (-> current-periscope type) fuel-cell)
+                (let ((mirror (the-as reflector-mirror (process-by-ename "reflector-mirror-2"))))
+                  (if (and mirror (= (-> mirror state) reflector-mirror-idle))
+                    (go-process mirror reflector-mirror-broken #f)
+                    )
+                )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+    (none)
+  )
+
+;; deactive given snowy blocker
+(defun deactivate-snow-bumper ((bumper-name string))
+  (let ((bumper (the-as snow-bumper (process-by-ename bumper-name))))
+    (when (and bumper (or (name= (-> bumper state name) "snow-bumper-active-close-idle") (name= (-> bumper state name) "snow-bumper-active-far-idle")))
+      (go-process bumper snow-bumper-deactivate)
+      )
+    )
+  )
+
+;; explodes given dark eco crystal
+(defun explode-dark-crystal ((crystal-name string) (crystal-num int))
+  (close-specific-task! (game-task cave-dark-crystals) (task-status need-hint))
+  (let ((crystal (the-as dark-crystal (process-by-ename crystal-name))))
+    (cond
+    ((and crystal (name= (-> crystal state name) "dark-crystal-idle"))
+      (process-entity-status! crystal (entity-perm-status complete) #t) ;; set before exploding so we know to not to run the else code below internally if exploding from remote
+      (go-process crystal dark-crystal-explode)
+      )
+    (else
+      (when (nonzero? crystal-num)
+        (let* ((s4-0 (get-task-control (game-task cave-dark-crystals)))
+              (s3-0 (logior (get-reminder s4-0 3) (ash 1 crystal-num)))
+              )
+          (save-reminder s4-0 s3-0 3)
+          )
+        )
+      )
+      )
+    )
+  )
+
+;; moves the lpc chamber, stop-place 0 for rock village, 1 for LPC 
+(defun move-lpc-chamber ((stop-palce int))
+  (save-reminder (get-task-control (game-task sunken-room)) stop-palce 0)
+
+  (if (= stop-palce 1)
+    (let ((chamber (the-as exit-chamber (process-by-ename "exit-chamber-1"))))
+      (if (and chamber (name= (-> chamber state name) "exit-chamber-charger-puzzle"))
+        (go-process chamber exit-chamber-charger-puzzle-beaten)
+        (if (and chamber (not (name= (-> chamber state name) "exit-chamber-lower")) (not (name= (-> chamber state name) "exit-chamber-rise")))
+          (reset-specific-actor "exit-chamber-1")
+          )
+        )
+      )
+    (let ((chamber-dummy (the-as exit-chamber-dummy (process-by-ename "exit-chamber-dummy-1")))
+          (chamber (the-as exit-chamber (process-by-ename "exit-chamber-1"))))
+      (if (and chamber (not (name= (-> chamber state name) "exit-chamber-lower")) (not (name= (-> chamber state name) "exit-chamber-rise")))
+        (reset-specific-actor "exit-chamber-1")
+        )
+      (if (and chamber-dummy (name= (-> chamber-dummy state name) "exit-chamber-dummy-wait-to-appear"))
+        (go-process chamber-dummy exit-chamber-dummy-idle)
+        )
+      )
+    )
+    (none)
+  )
+
+;; removes given powercell eye from given oracle
+(defun remove-oracle-eye ((ename string) (first-eye symbol))
+  (let ((oracle-statue (the-as oracle (process-by-ename ename))))
+    (cond
+      ((not first-eye)
+        (let ((a0-25 (handle->process (-> oracle-statue right-eye-cell))))
+          (if a0-25
+              (deactivate a0-25)
+              )
+          )
+        )
+      (else
+        (let ((a0-29 (handle->process (-> oracle-statue left-eye-cell))))
+          (if a0-29
+              (deactivate a0-29)
+              )
+          )
+        )
+      )
+    )
+  )

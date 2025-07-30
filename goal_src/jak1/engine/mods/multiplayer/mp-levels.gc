@@ -1,0 +1,122 @@
+;;-*-Lisp-*-
+(in-package goal)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; What is this file for.
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#|
+This file contains level oriented functions you potentially need to add your own stuff too when adding multiplayer to custom levels.
+The rest of level focused utility functions are kept in mp-utils.gc
+|#
+
+;; check if given symbol is a valid level
+(defun is-valid-level? ((level-name symbol))
+  (case level-name
+    (('lavatube 'beach 'citadel 'darkcave 'finalboss 'firecanyon 
+    'jungle 'jungleb 'maincave 'misty 'ogre 'robocave 'rolling 'snow 
+    'sunken 'sunkenb 'swamp 'training 'village1 'village2 'village3)
+      (return #t)
+      )
+    )
+  #f
+  )
+
+;; checks if two areas are considered the same level
+(defun is-same-level? ((level0 symbol) (level1 symbol))
+  (or (= level0 level1)
+      (and (symbol-member? level0 '(maincave robocave darkcave)) (symbol-member? level1 '(maincave robocave darkcave)))
+      (and (symbol-member? level0 '(sunken sunkenb)) (symbol-member? level1 '(sunken sunkenb)))
+      (and (symbol-member? level0 '(jungle jungleb)) (symbol-member? level1 '(jungle jungleb)))
+      (and (symbol-member? level0 '(citadel finalboss)) (symbol-member? level1 '(citadel finalboss)))
+      )
+  )
+
+(defun level-name->display-name ((level-name symbol))
+  (case level-name
+    (('lavatube) "Lava Tube")
+    (('beach) "Beach")
+    (('citadel) "Citadel")
+    (('darkcave) "Dark Cave")
+    (('finalboss) "Final Boss")
+    (('firecanyon) "Fire Canyon")
+    (('jungle) "FJ")
+    (('jungleb) "FJ Temple")
+    (('maincave) "Spider Cave")
+    (('misty) "Misty")
+    (('ogre) "MP")
+    (('robocave) "Robot Cave")
+    (('rolling) "Basin")
+    (('snow) "Snowy")
+    (('sunken) "LPC Top")
+    (('sunkenb) "LPC Bottom")
+    (('swamp) "Boggy")
+    (('training) "Geyser")
+    (('village1) "Sandover")
+    (('village2) "Rock Village")
+    (('village3) "Crater")
+    )
+  )
+
+(defun is-task-cell-collect? ((task game-task) (status task-status))
+  (and (= status (task-status need-resolution))
+      (!= task (game-task none))
+      (!= task (game-task complete))
+      (!= task (game-task firecanyon-assistant))
+      (!= task (game-task village2-levitator))
+      (!= task (game-task swamp-arm))
+      (!= task (game-task village3-button))
+      (!= task (game-task red-eggtop))
+      (!= task (game-task lavatube-balls))
+      (!= task (game-task lavatube-start))
+      (!= task (game-task intro))
+      (!= task (game-task village4-button))
+      (!= task (game-task finalboss-movies))
+      (!= task (game-task plunger-lurker-hit))
+      (!= task (game-task leaving-misty))
+      (!= task (game-task assistant-village3))
+      (!= task (game-task max))
+    )
+  )
+
+
+;; any of targets currently loaded levels has zoomer restriction on
+(defun current-level-is-zoomer-restricted? ()
+  (let ((level-name (symbol->string (-> (level-get-target-inside *level*) name))))
+    (cond
+      ((string= level-name "firecanyon")
+        (not (-> *zoomer-level-unlocks* fire-canyon))
+        )
+      ((string= level-name "ogre")
+        (not (-> *zoomer-level-unlocks* mountain-pass))
+        )
+      ((string= level-name "lavatube")
+        (not (-> *zoomer-level-unlocks* lava-tube))
+        )
+      (else
+        #f
+        )
+      )
+    )
+  )
+
+;; removes zoomer restriction from current level
+(defun unlock-zoomer-in-current-level ()
+  (let ((level-name (symbol->string (-> (level-get-target-inside *level*) name))))
+    (cond
+      ((string= level-name "firecanyon")
+        (set! (-> *zoomer-level-unlocks* fire-canyon) #t)
+        )
+      ((string= level-name "ogre")
+        (set! (-> *zoomer-level-unlocks* mountain-pass) #t)
+        )
+      ((string= level-name "lavatube")
+        (set! (-> *zoomer-level-unlocks* lava-tube) #t)
+        )
+      (else
+        #f
+        )
+      )
+    )
+  )

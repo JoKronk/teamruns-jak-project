@@ -1,0 +1,507 @@
+;;-*-Lisp-*-
+(in-package goal)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; What is this file for.
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#|
+Entry point for multiplayer logic ran through hooks.
+|#
+
+(defun-extern update-mp-state none)
+
+(defun mp-on-zoomer-entry ()
+  ;; handle zoomer unlock
+  (let ((level-name (symbol->string (-> (level-get-target-inside *level*) name))))
+    (if (or (all-teammates-on-level-racer?)
+          (and (string= level-name "firecanyon") (task-closed? (game-task firecanyon-end) (task-status need-resolution)))
+          (and (string= level-name "ogre") (task-closed? (game-task ogre-end) (task-status need-resolution)))
+          (and (string= level-name "lavatube") (task-closed? (game-task lavatube-balls) (task-status need-resolution)))
+        )
+      (unlock-zoomer-in-current-level)
+      )
+    )
+
+
+  (if (or (= (-> *multiplayer-info* game allow_solo_hub_zoomers) 1) (= (-> *multiplayer-info* game free_for_all) 1) (not (current-level-is-zoomer-restricted?)))
+    (set-zoomer-full-mode)
+    (set-zoomer-wait-mode)
+    )
+
+  (none)
+  )
+
+(defun mp-on-level-enter ()
+  (when (and *target* *self-setup-completed* (!= (-> (level-get-target-inside *level*) name) 'title))
+    (when (!= (-> *self-player-info* current_level) (-> (level-get-target-inside *level*) name))
+      (set! (-> *self-player-info* current_level) (-> (level-get-target-inside *level*) name))
+      (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) current_level) (-> *self-player-info* current_level))
+      (set! *current-boss-phase* 10)
+      )
+    (set! *allow-cell-pickup?* (or (= (-> *multiplayer-info* game require_same_level) 0) (all-teammates-in-same-level?)))
+    (set! *allow-orb-pickup?* (or (= (-> *multiplayer-info* game require_same_level) 0) 
+                                  (all-teammates-in-same-level?)
+                                  (or (!= (-> *multiplayer-info* game category) (run-category all-orbs))
+                                      (!= (-> *multiplayer-info* game category) (run-category all-flies)))))
+    (set! *allow-fly-pickup?* (or (= (-> *multiplayer-info* game require_same_level) 0) 
+                                  (all-teammates-in-same-level?)
+                                  (and (!= (-> *multiplayer-info* game category) (run-category all-orbs))
+                                      (!= (-> *multiplayer-info* game category) (run-category all-flies)))))
+    )
+  (none)
+)
+
+(defun mp-on-save ((save-event symbol))
+  (case save-event
+    (('save-start)   
+      (set! *pause-multiplayer-logic* #t)
+      )
+    (('save-end)     
+      (set! *pause-multiplayer-logic* #f) 
+      (set! *player-can-load* #t)
+      (set! (-> *teamrun-info* just_saved?) 1)
+      (update-mp-state)
+      )
+    )
+  (none)
+)
+
+(defun mp-on-load ((load-event symbol))
+  (case load-event
+    (('load-start)   
+      (set! *pause-multiplayer-logic* #t)
+      )
+    (('load-end)     
+      (set! *pause-multiplayer-logic* #f) 
+      (set! (-> *teamrun-info* just_loaded?) 1)
+      (update-mp-state)
+      )
+    )
+  (none)
+)
+
+(defun mp-on-debug-toggle ()
+  (update-mp-state)
+  
+  (none)
+  )
+
+(defun mp-on-new-checkpoint ()
+  (when (and *target* (!= (-> (level-get-target-inside *level*) name) 'title))
+    (set! (-> *teamrun-info* current_continue) (-> *game-info* current-continue name))
+    (update-mp-state)
+    (set! *player-can-load* #f)
+
+    (if (and (= (-> *multiplayer-info* game no_lts) 1) (name= (-> *game-info* current-continue name) "lavatube-after-ribbon") (< (the int (-> *game-info* fuel)) 72))
+      (start 'play (get-continue-by-name *game-info* "lavatube-start"))
+      )
+
+    (check-prevent-citadel-skip)
+  )
+  (none)
+  ) 
+
+(defun mp-on-level-status-update ()
+  ;; this could/should be improved to some more dynamic structure
+  ;; especially if we want to support multiplayer in jak 2 in the future as well
+
+  (when (and *target* (!= (-> (level-get-target-inside *level*) name) 'title))
+    (when (-> *load-state* want 0)
+      (set! (-> *teamrun-levels-info* level0_name) (symbol->string (-> *load-state* want 0 name)))
+      (set! (-> *teamrun-levels-info* level0_status) (symbol->string (-> *load-state* want 0 display?)))
+      )
+
+    (when (-> *load-state* want 1)
+      (set! (-> *teamrun-levels-info* level1_name) (symbol->string (-> *load-state* want 1 name)))
+      (set! (-> *teamrun-levels-info* level1_status) (symbol->string (-> *load-state* want 1 display?)))
+      )
+
+    
+    (set! (-> *teamrun-levels-info* has_level_update?) 1)
+    (set! *has-none-position-update?* #t)
+    )
+  (none)
+  )
+
+(defun mp-after-jak-spawn ()
+  ;; makes sure citadel elevator always spawns in
+  (if (string= (symbol->string (-> (level-get-target-inside *level*) name)) "citadel")
+    (send-event (process-by-name "citb-exit-plat-4" *active-pool*) 'trigger)
+    )
+
+  (cond
+    (*move-by-index-on-spawn* ;; on run start
+      (set! *move-by-index-on-spawn* #f)
+
+      (when (is-level-alive? 'village1) ;; ensure training is loaded for fast tp and crash avoidance for spectator
+        (load-state-want-levels 'training 'village1)
+        (load-state-want-display-level 'village1 'display)
+        (load-state-want-display-level 'training 'display)
+        (load-state-want-vis 'training)
+        (load-state-want-force-vis 'training #t)
+        )
+
+      (cond 
+        ((not (-> *spectator-handler* is_spectator?))
+          (+! (-> *target* root trans x) (meters (* (the float (-> *self-player-info* player_index)) 2.8)))
+          (+! (-> *target* root trans z) (meters (* (the float (-> *self-player-info* player_index)) 0.5)))
+          )
+        (else ;; on run start move to hut if spectator
+          (tp-target -63.5 11.1 -32.8)
+          )
+        )
+      )
+    (else
+      (+! (-> *target* root trans x) (* (the float (-> *self-player-info* player_index)) 10))
+      (+! (-> *target* root trans z) (* (the float (-> *self-player-info* player_index)) 10))
+      )
+    )
+
+
+  (cond
+    ((name= (-> *game-info* current-continue name) "finalboss-fight")
+      (when (not *allow-final-boss?*) 
+        (+! (-> *target* root trans x) (meters -161.0))
+        (+! (-> *target* root trans z) (meters 120.0))
+        (+! (-> *target* root trans y) (meters 90.0))
+        (send-event *camera* 'change-state cam-string 0)
+        )
+      (let ((boss (process-by-ename "robotboss-3")))
+        (if (and boss (any-interactive-remote-target-close? (the-as process-drawable boss) (meters 300.0)))
+          (move-boss-to-phase "robotboss-3" *current-boss-phase* #f)
+          (set! *current-boss-phase* 10)
+          )
+        )
+      )
+    ((name= (-> *game-info* current-continue name) "citadel-elevator")
+      (if *allow-one-time-citadel-skip?*
+        (set! *allow-one-time-citadel-skip?* #f)
+        )
+      )
+    ((name= (-> *game-info* current-continue name) "ogre-start")
+      (let ((bridge (process-by-ename "ogre-bridge-1")))
+        (if (and bridge (any-interactive-remote-target-close? (the-as process-drawable bridge) (meters 100.0)))
+          (move-boss-to-phase "ogreboss-1" *current-boss-phase* #f)
+          (set! *current-boss-phase* 10)
+          )
+        )
+      )
+    ((name= (-> *game-info* current-continue name) "jungle-tower")
+      (let ((boss (process-by-ename "plant-boss-3")))
+        (if (and boss (any-interactive-remote-target-close? (the-as process-drawable boss) (meters 40.0)))
+          (move-boss-to-phase "plant-boss-3" *current-boss-phase* #f)
+          (set! *current-boss-phase* 10)
+          )
+        )
+      )
+    )
+    (none)
+  )
+  
+
+(defun mp-on-task-update ((task game-task) (status task-status))
+  (when (or (!= task *last-task*) (!= status *last-task-status*))
+    (set! *last-task* task)
+    (set! *last-task-status* status)
+    
+    (add-interaction-to-buffer 
+      (interaction-type game-task)
+      (the float task)
+      (the float status)
+      (game-task->string task)
+      (cond
+        ((= task (game-task village3-extra1)) "village3") ;; gets broken from maincave and is handled from there otherwise
+        (else (symbol->string (-> (level-get-target-inside *level*) name)))
+        )
+      "entity-pool"
+      )
+    )
+  
+  (if (and (= (-> *multiplayer-info* game mode) (run-mode lockout)) (= status (task-status need-resolution)))
+    (check-lockout-restrictions)
+    )
+  (none)
+  )
+  
+
+(defun mp-on-pickup ((kind pickup-type) (amount float) (proc process))
+  (when (and (-> proc parent)
+    (not (name= (-> proc name) "display")) ;; prevent pickups given over REPL
+    (not (and (= kind (pickup-type money)) (<= amount -90))) ;; prevent orb buys to avoid dupe deductions on buy
+    )
+    (let 
+      ((name (case kind
+        (((pickup-type money) (pickup-type buzzer) (pickup-type fuel-cell))
+          (update-mp-state)
+          (if (or (name= (-> proc name) "fuel-cell") (name= (-> proc name) "buzzer"))
+            (symbol->string (-> proc name))
+            (the-as string (-> proc name))
+            )
+          )
+        (((pickup-type eco-blue) (pickup-type eco-yellow) (pickup-type eco-green) (pickup-type eco-red))
+          (if (and (name= (-> (ppointer->process (-> proc parent)) name) "entity-pool") (not (or (name= (-> proc name) "health") (name= (-> proc name) "eco-blue") (name= (-> proc name) "eco-red") (name= (-> proc name) "eco-yellow"))))
+            (the-as string (-> proc name))
+            (symbol->string (-> proc name))
+            )
+          )
+        (else
+          ""
+          )
+        ))
+
+      (parent (case kind
+        (((pickup-type money) (pickup-type buzzer) (pickup-type fuel-cell))
+          (let* ((parent (ppointer->process (-> proc parent))))
+            (if (or (name= (-> parent name) "entity-pool") (name= (-> parent name) "buzzer"))
+              (symbol->string (-> parent name))
+              (the-as string (-> parent name))
+              )
+            )
+          )
+        (((pickup-type eco-blue) (pickup-type eco-yellow) (pickup-type eco-green) (pickup-type eco-red))
+            (let* ((parent (ppointer->process (-> proc parent))))
+              (if (name= (-> parent name) "entity-pool")
+                "entity-pool" ;; crash exist if assigned from parent name on green-eco from box
+                (the-as string (-> parent name))
+                )
+              )
+          )
+        (else
+          ""
+          )
+        ))
+
+      (level (case kind
+      (((pickup-type money) (pickup-type buzzer) (pickup-type fuel-cell))
+        (symbol->string (-> *level* level (-> (the-as process-drawable proc) draw level-index) name))
+        )
+      (((pickup-type eco-blue) (pickup-type eco-yellow) (pickup-type eco-green) (pickup-type eco-red))
+        (symbol->string (-> (level-get-target-inside *level*) name))
+        )
+        (else
+          ""
+          )
+        ))
+      )
+
+    (if (not (string= level ""))
+      (add-interaction-to-buffer 
+        (the-as interaction-type kind)
+        amount
+        0.0
+        name
+        level
+        parent
+        )
+      )
+    )
+
+    )
+  (none)
+  )
+
+(defun mp-on-crate-break ((type crate-type) (amount float) (proc process))
+  (add-interaction-to-buffer 
+    (interaction-type crate)
+    amount
+    (the float type)
+    (the-as string (-> proc name))
+    (symbol->string (-> *level* level (-> (the-as process-drawable proc) draw level-index) name))
+    (symbol->string (-> (ppointer->process (-> proc parent)) name))
+    )
+
+  (none)
+  )
+
+(defun mp-on-cell-pickup ((cell-event symbol))
+  (case cell-event
+    (('pickup)
+     ;; Code here runs as soon as you pickup a powercell
+     (deactivate-remote-cell)
+     )
+    (('cutscene-end)
+     ;; Code here runs at the end of any powercell cutscene
+     ))
+  (none)
+  )
+
+(defun mp-on-task-related-death ((name string) (amount float))
+  (add-interaction-to-buffer 
+    (interaction-type enemy-death)
+    amount
+    0.0
+    name
+    (symbol->string (-> (level-get-target-inside *level*) name))
+    "entity-pool"
+    )
+  (none)
+  )
+
+(defun mp-on-new-boss-phase ((name string) (phase float) (level string) (force-phase float))
+  (if (> *current-boss-phase* (the int phase))
+    (set! *current-boss-phase* (the int phase))
+    )
+  (add-interaction-to-buffer 
+    (interaction-type boss-phase)
+    phase
+    force-phase
+    name
+    level
+    "entity-pool"
+    )
+  (none)
+  )
+
+(defun mp-on-fish-caught ((total-amount float))
+  (add-interaction-to-buffer 
+    (interaction-type fish)
+    total-amount
+    1.0
+    "fisher-1"
+    "jungle"
+    "entity-pool"
+    )
+  (none)
+  )
+
+(defun mp-on-fish-missed((total-amount float))
+  (add-interaction-to-buffer 
+    (interaction-type fish)
+    total-amount
+    0.0
+    "fisher-1"
+    "jungle"
+    "entity-pool"
+    )
+  (none)
+  )
+
+(defun mp-on-periscope-activate ((periscope-name string))
+  (add-interaction-to-buffer 
+    (interaction-type periscope)
+    1.0
+    0.0
+    periscope-name
+    "jungle"
+    "entity-pool"
+    )
+  (none)
+  )
+
+(defun mp-on-last-periscope-power-up ()
+  (add-interaction-to-buffer 
+    (interaction-type periscope)
+    1.0
+    0.0
+    "periscope-16"
+    "jungle"
+    "entity-pool"
+    )
+  (none)
+  )
+
+(defun mp-on-bumper-deactivate ((bumper-name string))
+  (add-interaction-to-buffer 
+    (interaction-type snow-bumper)
+    1.0
+    0.0
+    bumper-name
+    "snow"
+    "entity-pool"
+    )
+  (none)
+  )
+
+(defun mp-on-dark-crystal-explode ((crystal-name string) (crystal-num int) (level-name string))
+  (add-interaction-to-buffer 
+    (interaction-type dark-crystal)
+    1.0
+    (the float crystal-num)
+    crystal-name
+    level-name
+    "entity-pool"
+    )
+  (none)
+  )
+
+(defun mp-on-lpc-chamber-stop ((stop-point float))
+  (add-interaction-to-buffer 
+    (interaction-type lpc-chamber)
+    1.0
+    stop-point
+    "exit-chamber-1"
+    (if (= stop-point 1.0) "sunkenb" "village2")
+    "entity-pool"
+    )
+  (none)
+  )
+
+(defun mp-on-swingpole-grab ((pole-name string) (level-name string))
+  (add-interaction-to-buffer 
+    (interaction-type swingpole)
+    1.0
+    0.0
+    pole-name
+    level-name
+    "entity-pool"
+    )
+  (none)
+  )
+
+(defun mp-on-jak-spawn ()
+  (set! (-> *teamrun-info* just_spawned?) 1)
+  (temp-disable-remote-collision 1.0)
+  (update-mp-state)
+  (none)
+  )
+
+(defun mp-on-jak-death ((death-event symbol))
+  (case death-event
+    (('dying)
+      ;; Code here runs immediately every time jak dies, before any death animation or death cutscene
+      
+      (if (!= *current-boss-phase* -1) 
+        (cond
+          ((name= (-> *game-info* current-continue name) "jungle-tower")
+            (if (< *current-boss-phase* 2)
+              (set! *current-boss-phase* (+ *current-boss-phase* 1))
+              )
+            (runs-on-new-boss-phase "plant-boss-3" (the float *current-boss-phase*) "jungleb" 1.0)
+            )
+          ((name= (-> *game-info* current-continue name) "ogre-start")
+            (when (< *current-boss-phase* 6)
+              (set! *current-boss-phase* (if (<= *current-boss-phase* 4) (+ *current-boss-phase* 3) 7))
+              (runs-on-new-boss-phase "ogreboss-1" (the float *current-boss-phase*) "ogre" 1.0)
+              )
+            )
+          ((name= (-> *game-info* current-continue name) "finalboss-fight")
+            (case *current-boss-phase*
+              ((0)
+                (set! *current-boss-phase* 1)
+                )
+              ((1 2)
+                (set! *current-boss-phase* 3)
+                )
+              ((3 4)
+                (set! *current-boss-phase* 5)
+                )
+              ((5 6)
+                (set! *current-boss-phase* 6)
+                )
+              )
+            (runs-on-new-boss-phase "robotboss-3" (the float *current-boss-phase*) "finalboss" 1.0)
+            )
+          )
+        )
+
+      )
+    (('blackout)
+      ;; Code here runs after jak dies (and any death cutscene finishes), during the blackout before he spawns
+
+      )
+    )
+  
+  (none)
+  )

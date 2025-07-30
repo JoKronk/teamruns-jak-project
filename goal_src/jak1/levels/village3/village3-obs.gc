@@ -9,7 +9,7 @@
 (require "engine/target/target-util.gc")
 
 (define-extern *target-on-active-gondola?* symbol)
-(define-extern any-interactive-targets-close-to-vector? (function vector float basic))
+(define-extern any-interactive-target-close-to-vector? (function vector float basic))
 (define-extern remote-target-fake-cpad-circle-pressed? (function target basic))
 
 ;; DECOMP BEGINS
@@ -155,7 +155,7 @@
          (ja :group! gondola-idle-down-ja)))
       (transform-post)
       (loop
-        (when (and *target* (and (any-interactive-targets-close-to-vector? (vector<-cspace! (new 'stack-no-clear 'vector) (-> self node-list data 3)) 81920.0)
+        (when (and *target* (and (any-interactive-target-close-to-vector? (vector<-cspace! (new 'stack-no-clear 'vector) (-> self node-list data 3)) 81920.0)
                         (not (movie?))
                         (not (level-hint-displayed?))
                         (time-elapsed? (-> self state-time) (seconds 3))

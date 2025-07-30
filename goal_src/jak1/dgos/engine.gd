@@ -36,7 +36,7 @@
   "dma-disasm.o"
   "pc-cheats.o" ;; added
   "pckernel-h.o" ;; added
-  "mod-settings-h.o" ;; added
+  "mp-types-h.o" ;; added
   "pckernel-impl.o" ;; added
   "pc-debug-common.o" ;; added
   "pc-debug-methods.o" ;; added

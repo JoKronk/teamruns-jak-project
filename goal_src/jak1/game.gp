@@ -2096,8 +2096,8 @@
 (goal-src "pc/features/speedruns.gc" "speedruns-h" "autosplit-h")
 (goal-src "pc/pc-cheats.gc" "dma-buffer")
 (goal-src "pc/pckernel-h.gc" "dma-buffer")
-(goal-src "engine/mods/mod-settings-h.gc")
-(goal-src "pc/pckernel-impl.gc" "pckernel-h" "mod-settings-h" "pc-cheats")
+(goal-src "engine/mods/multiplayer/mp-types-h.gc")
+(goal-src "pc/pckernel-impl.gc" "pckernel-h" "mp-types-h" "pc-cheats")
 (goal-src "pc/util/pc-anim-util.gc" "target-h")
 (goal-src "pc/pckernel-common.gc" "pckernel-impl" "pc-anim-util" "settings" "video" "target-h" "autosplit-h" "speedruns-h")
 (goal-src "pc/pckernel.gc" "pckernel-common")
@@ -2112,17 +2112,25 @@
 
 (goal-src "engine/mods/input-display.gc")
 (goal-src "engine/mods/orb-placer.gc")
-(goal-src "engine/mods/taunt-menu.gc")
 
 (goal-src-sequence
  ;; prefix
  "engine/"
  :deps ("$OUT/obj/battlecontroller.o" "$OUT/obj/snow-bunny.o" "$OUT/obj/baby-spider.o" "$OUT/obj/sage-village3.o" "$OUT/obj/sage-finalboss.o" "$OUT/obj/assistant-citadel.o" "$OUT/obj/assistant-lavatube.o" "$OUT/obj/robocave-part.o" "$OUT/obj/driller-lurker.o" "$OUT/obj/training-part.o" "$OUT/obj/rolling-race-ring.o" "$OUT/obj/beach-part.o" "$OUT/obj/sculptor.o" "$OUT/obj/sunken-fish.o" "$OUT/obj/billy.o" "$OUT/obj/sidekick-human.o" "$OUT/obj/flying-lurker.o" "$OUT/obj/target-racer-h.o" "$OUT/obj/firecanyon-obs.o" "$OUT/obj/target-flut.o" "$OUT/obj/hud-classes-pc.o" "$OUT/obj/collide-reaction-racer.o" "$OUT/obj/plant-boss.o" "$OUT/obj/beach-obs.o" "$OUT/obj/sunken-elevator.o" "$OUT/obj/jungle-part.o" "$OUT/obj/sequence-a-village1.o" "$OUT/obj/ticky.o")
+ "mods/multiplayer/mp-types.gc"
+ "mods/multiplayer/mp-settings.gc"
+ "mods/spectator/spec-types.gc"
+ "mods/multiplayer/mp-levels.gc"
+ "mods/multiplayer/mp-utils.gc"
+ "mods/multiplayer/mp-deport.gc" ;; to be removed
+ "mods/spectator/spec-logic.gc"
+ "mods/text-rendering/mod-text-render.gc"
+ "mods/custom-checkpoint/mod-checkpoint.gc"
+ "mods/multiplayer/mp-taunts.gc"
+ "mods/multiplayer/mp-interactions.gc"
+ "mods/multiplayer/mp-hooks.gc"
+ "mods/multiplayer/mp-logic.gc"
  "mods/mod-settings.gc"
- "mods/mod-game-handler.gc"
- "mods/mod-spectator-mode.gc"
- "mods/mod-text-render.gc"
- "mods/mod-remote-interaction.gc"
  "mods/mod-common-functions.gc"
  "mods/mod-custom-code.gc"
  "mods/mod-debug.gc"

@@ -1,0 +1,673 @@
+;;-*-Lisp-*-
+(in-package goal)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; What is this file for.
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#|
+Core logic ran for multiplayer.
+|#
+
+(defun handle-new-mp-state ((tgt-idx int) (remote-target target))
+  (set! (-> *multiplayer-info* players tgt-idx mp_state_check) (-> *multiplayer-info* players tgt-idx mp_state))
+  (if (and (is-interactive? tgt-idx) (not (logtest? (-> remote-target control root-prim prim-core collide-as) (collide-kind target-remote)))) ;; add collision if interactive
+    (logior! (-> remote-target control root-prim collide-as) (collide-kind target-remote))
+    )
+  (if (and (is-active? tgt-idx) (logtest? (-> remote-target control root-prim collide-as) (collide-kind target-remote)))
+    (logclear! (-> remote-target control root-prim collide-as) (collide-kind target-remote))
+    )
+  )
+
+(defun clean-up-interaction-data ((target remote-player-info)) ;; needs to be done in game in case we skip frames when transfering position data
+  (set! (-> target inter_type) (interaction-type none))
+  (set! (-> target inter_amount) 0.0)
+  (set! (-> target inter_status) 0.0)
+  (set! (-> target inter_name) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+  (set! (-> target inter_parent) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+  (set! (-> target inter_level) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+  (set! (-> target inter_cleanup) 0)
+  
+  (none)
+  )
+
+;; remote cell is the cell used for remote targets when they pickup a cell since the pickup animation is given to jak from a cell
+(defun deactivate-remote-cell ()
+    (let* ((remote-cell (process-by-name "remote-cell" *active-pool*)))
+      (when remote-cell
+        (deactivate remote-cell)
+      )
+    )
+    (none)
+  )
+
+;; cancels occupying spool anim to free it up for a new one
+(defun cancel-current-spool-anim ()
+  (let ((spool-process (the-as process-drawable (handle->process (-> *art-control* spool-lock)))))
+    (when spool-process
+      (cond
+        ((-> spool-process entity)
+          (kill! (-> spool-process entity))
+          (update-perm! (-> spool-process entity extra perm) 'life (the-as entity-perm-status 623))
+          )
+        ((and (type-type? (-> spool-process type) fuel-cell) (name= (-> spool-process name) "remote-cell"))
+          (deactivate-remote-cell)
+          )
+        )
+      )
+    )
+  (none)
+  )
+
+;; runs the pickup animation for given target
+(defun run-target-fuel-cell-pickup ((remote-target target))
+    (when (if (-> *spectator-handler* is_spectator?)
+            (if (has-camera-type? 'cam-free-floating)
+              (is-camera-within-target-dist? remote-target 500000.0)
+              (remote-target-process-close? (get-spectator-target) remote-target 500000.0)
+              )
+            (process-close? remote-target 500000.0) ;; only run if target is close enough as pickup sound is global
+            )
+      (let* ((remote-cell (birth-pickup-at-point (-> remote-target control trans) (pickup-type fuel-cell) 1.0 #f remote-target (the-as fact-info #f))))
+        (deactivate-remote-cell)
+        (set! (-> (the-as fuel-cell (ppointer->process remote-cell)) name) "remote-cell")
+        (process-grab? remote-target)
+        (go-virtual-process (the-as fuel-cell (ppointer->process remote-cell)) pickup #f (process->handle remote-target))
+      )
+    )
+    (none)
+    )
+
+
+;; updates the multiplayer info of self target
+(defun update-self-multiplayer-info ()
+  (set! (-> *self-player-info* trans_x)    (-> *target* root trans x))
+  (set! (-> *self-player-info* trans_y)    (-> *target* root trans y))
+  (set! (-> *self-player-info* trans_z)    (-> *target* root trans z))
+  (set! (-> *self-player-info* quat_x)     (-> *target* root quat x))
+  (set! (-> *self-player-info* quat_y)     (-> *target* root quat y))
+  (set! (-> *self-player-info* quat_z)     (-> *target* root quat z))
+  (set! (-> *self-player-info* quat_w)     (-> *target* root quat w))
+
+  (if (target-on-racer? *target*)
+    (set! (-> *self-player-info* zoomer_rot_y)     (-> *target* racer rot y))
+    (set! (-> *self-player-info* zoomer_rot_y)     0.0)
+    )
+
+  (set! (-> *self-player-info* tgt_state)  (-> *target* state name))
+
+  (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) username)       (-> *self-player-info* username))
+  (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) color)          (-> *self-player-info* color))
+  (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) trans_x)        (-> *target* root trans x))
+  (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) trans_y)        (-> *target* root trans y))
+  (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) trans_z)        (-> *target* root trans z))
+  (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) quat_x)         (-> *target* root quat x))
+  (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) quat_y)         (-> *target* root quat y))
+  (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) quat_z)         (-> *target* root quat z))
+  (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) quat_w)         (-> *target* root quat w))
+  (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) zoomer_rot_y)   (-> *self-player-info* zoomer_rot_y))
+  (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) tgt_state)      (-> *target* state name))
+  (none)
+  )
+
+;; sets up multiplayer data for self
+(defun set-up-self-remote-if-null ()
+  (when (not *self-player-info*)
+    (set! *self-player-info* (new 'global 'remote-player-info))
+    (set! (-> *self-player-info* username) (new 'global 'string MAX_USERNAME_LEN "local_player")) 
+    (set! (-> *self-player-info* color)  (tgt-color red))
+    (set! (-> *self-player-info* mp_state)  (mp-tgt-state mp-tgt-interactive))
+    (set! (-> *self-player-info* mp_state_check)  (mp-tgt-state mp-tgt-interactive))
+    (set! (-> *multiplayer-info* client_version) (new 'global 'string INTERACTION_STRING_LEN "Not Connected"))
+    (set! (-> *multiplayer-info* player_num) 0)
+    (set! (-> *self-player-info* current_level) (-> (level-get-target-inside *level*) name))
+    (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) current_level) (-> *self-player-info* current_level))
+
+    (dotimes (idx (-> *interaction-update-buffer* length))
+      (set! (-> *interaction-update-buffer* idx) (new 'global 'interaction-info))
+      )
+    (set! *self-setup-completed* #t)
+    
+    (update-self-multiplayer-info)
+    (pc-connect-mp-info *multiplayer-info* *self-player-info* *teamrun-info* *teamrun-levels-info*)
+    )
+  (none)
+)
+
+
+(defun update-target-state ((tgt-state symbol) (t target) (inter-name string))
+  (case tgt-state
+    ;; normal attacks (and relevant jumps) !DONE!
+    (('target-running-attack) (go-process t target-running-attack))
+    (('target-attack) (go-process t target-attack))
+    (('target-attack-air) (go-process t target-attack-air #f))
+    (('target-attack-uppercut) (go-process t target-attack-uppercut (-> *TARGET-bank* attack-jump-height-min) (-> *TARGET-bank* attack-jump-height-max)))
+    (('target-attack-uppercut-jump) (go-process t target-attack-uppercut-jump (-> *TARGET-bank* attack-jump-height-min) (-> *TARGET-bank* attack-jump-height-max)))
+    (('target-flop) (go-process t target-flop (the-as float 33775.48) (the-as float -122880.0)  (the-as float 0.0))) ;;ground pound
+    (('target-flop-hit-ground) (go-process t target-flop-hit-ground #f))
+    (('target-wheel) (go-process t target-wheel))
+    (('target-wheel-flip) (go-process t target-wheel-flip (-> *TARGET-bank* wheel-flip-height) (-> *TARGET-bank* wheel-flip-dist)))
+    
+    ;; jumps !DONE!
+    (('target-jump) (go-process t target-jump (-> *TARGET-bank* jump-height-min) (-> *TARGET-bank* jump-height-max) (the-as surface #f)))
+    (('target-double-jump) (go-process t target-double-jump (-> *TARGET-bank* double-jump-height-min) (-> *TARGET-bank* double-jump-height-max)))
+    (('target-high-jump) (go-process t target-high-jump (-> *TARGET-bank* flip-jump-height-min) (-> *TARGET-bank* flip-jump-height-max) 'flip))
+    (('target-duck-high-jump) (go-process t target-duck-high-jump (-> *TARGET-bank* flip-jump-height-min) (-> *TARGET-bank* flip-jump-height-max) 'duck))
+    (('target-duck-high-jump-jump) (go-process t target-duck-high-jump-jump (-> *TARGET-bank* flip-jump-height-min) (-> *TARGET-bank* flip-jump-height-max) 'duck))
+
+    ;; eco !DONE!
+    (('target-eco-powerup) (send-event t 'powerup))
+    (('target-yellow-blast) (go-process t target-yellow-blast))
+    (('target-yellow-jump-blast) (go-process t target-yellow-jump-blast))
+    (('target-launch) (go-process t target-launch (the-as float (-> t control unknown-dword60)) (the-as symbol (-> t control unknown-dword61)) (-> t control unknown-vector102) (-> t control unknown-dword63)))
+
+    ;; edge grabs !DONE!
+    (('target-edge-grab) (go-process t target-edge-grab))
+    (('target-edge-grab-off) (go-process t target-edge-grab-off))
+    (('target-edge-grab-jump) (go-process t target-edge-grab-jump (-> *TARGET-bank* edge-grab-jump-height-min) (-> *TARGET-bank* edge-grab-jump-height-max)))
+    (('target-jump-forward) (go-process t target-jump-forward (-> *TARGET-bank* edge-grab-jump-height-min) (-> *TARGET-bank* edge-grab-jump-height-max)))
+
+    ;; normal movement !DONE!
+    (('target-stance) (go-process t target-stance))
+    (('target-stance-ambient) (go-process t target-stance-ambient))
+    (('target-walk) (go-process t target-walk))
+    (('target-wade-stance) (go-process t target-wade-stance))
+    (('target-wade-walk) (go-process t target-wade-walk))
+    (('target-ice-stance) (if (is-target-in-any-active-level? t) (go-process t target-ice-stance) (go-process t target-stance)))
+    (('target-ice-walk) (if (is-target-in-any-active-level? t) (go-process t target-ice-walk) (go-process t target-walk))) ;; ensure we only slide if loaded as this otherwise crashes
+    (('target-load-wait) (go-process t target-load-wait)) ;; trip
+    (('target-slide-down) (go-process t target-slide-down)) ;; slippery surface
+    (('target-turn-around) (go-process t target-turn-around))
+    (('target-falling) (go-process t target-falling #f))
+
+    ;; hit !DONE!
+    (('target-hit) (go-process t target-hit 'shove (-> t attack-info-rec)))
+    (('target-hit-ground) (go-process t target-hit-ground #f))
+    (('target-hit-ground-hard) (go-process t target-hit-ground-hard 0.0)) ;;toggle to 1.0 to flash invuln frames)
+
+    ;; swiming & water !TODO: swiming underwater has incorrect rotation on body
+    (('target-swim-stance) (send-event t 'change-mode 'swim) (go-process t target-swim-stance))
+    (('target-swim-walk) (send-event t 'change-mode 'swim) (go-process t target-swim-walk))
+    (('target-swim-down) (go-process t target-swim-down))
+    (('target-swim-up) (go-process t target-swim-up))
+    (('target-swim-jump) (go-process t target-swim-jump (-> *TARGET-bank* swim-jump-height-min) (-> *TARGET-bank* swim-jump-height-max)))
+    (('target-swim-jump-jump) (go-process t target-swim-jump-jump (-> *TARGET-bank* swim-jump-height-min) (-> *TARGET-bank* swim-jump-height-max) (the-as surface #f)))
+   
+    ;; duck !DONE!
+    (('target-duck-stance) (go-process t target-duck-stance))
+    (('target-duck-walk) (go-process t target-duck-walk))
+
+    ;; warp gates !DONE!
+    (('target-warp-out) (if (and (-> t state name) (!= (-> t state name) 'target-duck-high-jump) (!= (-> t state name) 'target-duck-high-jump-jump)) (go-process t target-duck-high-jump (-> *TARGET-bank* flip-jump-height-min) (-> *TARGET-bank* flip-jump-height-max) 'duck)))
+    (('target-warp-in) (if (and (-> t state name) (!= (-> t state name) 'target-duck-high-jump) (!= (-> t state name) 'target-duck-high-jump-jump)) (go-process t target-duck-high-jump (-> *TARGET-bank* flip-jump-height-min) (-> *TARGET-bank* flip-jump-height-max) 'duck)))
+
+
+    ;; other !DONE!
+    (('target-clone-anim) (run-target-fuel-cell-pickup t))
+    (('target-periscope) (send-event t 'change-mode 'periscope #f))
+    (('target-grab) (go-process t target-grab)) ;; process-grab animation while in cutscenes
+    (('target-fishing) (go-process t target-duck-stance)) ;; duck stance to not get stuck in active animation (send-event t 'change-mode 'fishing #f) ;; crashes as it tries sending commands as target, should be avoidable with (= self *target*) checks
+    (('target-death) (go-process t target-death 'target-hit-ground-hard))
+    (('target-look-around) (send-event t 'change-mode 'periscope #f)) ;; first person enter
+
+    ;; redundant for multiplayer
+    ;; (('target-stance-look-around) (go-process t target-stance-look-around)) ;; first person exit
+    ;; (('target-billy-game)) ;; will only put you in first person
+    ;; (('target-play-anim))
+    ;; (('target-snowball))
+    ;; (('target-snowball-start))
+    ;; (('target-title))
+    ;; (('target-title-play))
+    ;; (('target-title-wait))
+    ;; (('target-continue))
+    ;; (('target-demo))
+    ;; (('target-startup))
+    ;; (('target-final-door))
+
+    ;; poles !DONE!
+    (('target-pole-cycle) 
+      (let* ((swingpole_proc (process-by-ename inter-name))
+            (swingpole (process->handle swingpole_proc))
+          ) 
+        (when (or swingpole_proc (and (-> t state name) (!= (-> t state name) 'target-pole-flip-up-jump)))
+          (if swingpole_proc
+            (go-process t target-pole-cycle swingpole)
+            (go-process t target-pole-flip-up-jump 28672.0 28672.0)
+            )
+          )
+        )
+      )
+    (('target-pole-flip-forward) (if (and (-> t state name) (!= (-> t state name) 'target-pole-flip-up-jump)) (go-process t target-pole-flip-up-jump 28672.0 28672.0)))
+    (('target-pole-flip-forward-jump) (go-process t target-pole-flip-forward-jump (the-as float 14336.0) (the-as float 14336.0)))
+    (('target-pole-flip-up) (if (and (-> t state name) (!= (-> t state name) 'target-pole-flip-up-jump)) (go-process t target-pole-flip-up-jump 28672.0 28672.0)))
+    (('target-pole-flip-up-jump) (go-process t target-pole-flip-up-jump 28672.0 28672.0))
+
+
+    ;; tube slide !DONE!
+    (('target-tube-start 'target-tube 'target-tube-jump 'target-tube-hit)
+
+      (if (not (target-on-tube? t)) (send-event t 'change-mode 'tube #f)) ;; ensure on tube state
+
+      (when (target-on-tube? t) 
+        (case tgt-state
+          (('target-tube) (go-process t target-tube))
+          (('target-tube-jump) (go-process t target-tube-jump (-> *TARGET-bank* tube-jump-height-min) (-> *TARGET-bank* tube-jump-height-max)))
+          ;; (('target-tube-start) (send-event t 'change-mode 'tube #f))
+          ;; (('target-tube-hit) (go-process t target-hit-ground #f)
+          ;; (('target-tube-death))
+          )
+        )
+      )
+
+
+    ;; zoomer !DONE!
+    (('target-racing 'target-racing-start 'target-racing-get-on 'target-racing-bounce 'target-racing-clone-anim 
+      'target-racing-falling 'target-racing-grab 'target-racing-hit 'target-racing-jump  'target-racing-smack 'target-racing-death)
+
+      (if (not (target-on-racer? t)) (send-event t 'change-mode 'racing #f)) ;; ensure on racer state
+      
+      (when (target-on-racer? t) 
+        (case tgt-state
+          (('target-racing) (go-process t target-racing))
+          (('target-racing-bounce) (go-process t target-racing-bounce 2048.0 2048.0 #f))
+          (('target-racing-jump) (go-process t target-racing-jump 2048.0 5324.8 #t))
+          (('target-racing-smack) (go-process t target-racing-smack (-> t control unknown-float01) #t))
+          (('target-racing-grab) (go-process t target-racing-grab))
+          (('target-racing-falling) (go-process t target-racing-falling))
+          (('target-racing-clone-anim) (run-target-fuel-cell-pickup t))
+          (('target-racing-death)  
+            (set! (-> t attack-info attacker) (the-as handle #f))
+            (set! (-> t attack-info mode) 'generic)
+            ((method-of-type attack-info combine!) (-> t attack-info) (static-attack-info ((mode 'heat))))
+            (go-process t target-racing-death 'heat))
+          ;; (('target-racing-hit))
+          )
+        )
+      )
+    (('target-racing-get-off 'target-racing-get-off-hit-ground 'target-racing-get-off-jump)
+      (if (target-on-racer? t) (send-event t 'end-mode))
+      )
+
+
+    ;; flut flut !DONE!
+    (('target-flut-air-attack 'target-flut-air-attack-hit-ground 'target-flut-clone-anim 
+      'target-flut-double-jump 'target-flut-falling 'target-flut-get-on 'target-flut-grab 'target-flut-hit 'target-flut-hit-ground 
+      'target-flut-jump 'target-flut-running-attack 'target-flut-stance 'target-flut-start 'target-flut-walk)
+      
+      (if (not (target-on-flut? t)) (send-event t 'change-mode 'flut #f)) ;; ensure on flut state
+
+      (when (target-on-flut? t) 
+        (case tgt-state
+          (('target-flut-stance) (go-process t target-flut-stance))
+          (('target-flut-walk) (go-process t target-flut-walk))
+          (('target-flut-falling) (go-process t target-flut-falling #f))
+          (('target-flut-running-attack) (go-process t target-flut-running-attack))
+          (('target-flut-jump) (go-process t target-flut-jump (-> *FLUT-bank* jump-height-min) (-> *FLUT-bank* jump-height-max)))
+          (('target-flut-double-jump) (go-process t target-flut-double-jump (-> *FLUT-bank* double-jump-height-min) (-> *FLUT-bank* double-jump-height-max)))
+          (('target-flut-air-attack) (go-process t target-flut-air-attack (-> *FLUT-bank* air-attack-speed)))
+          (('target-flut-air-attack-hit-ground) (go-process t target-flut-air-attack-hit-ground))
+          (('target-flut-grab) (go-process t target-flut-grab))
+          (('target-flut-hit) (go-process t target-flut-hit 'shove (-> t attack-info-rec)))
+          (('target-flut-hit-ground) (go-process t target-flut-hit-ground))
+          (('target-flut-clone-anim) (run-target-fuel-cell-pickup t))
+          )
+      )
+      )
+    (('target-flut-get-off 'target-flut-get-off-hit-ground 'target-flut-get-off-jump 'target-flut-death)
+      (if (target-on-flut? t) (send-event t 'end-mode))
+      )
+
+    )
+  (none)
+  )
+
+(defun update-actor-position ((obj process-drawable) (p remote-player-info))
+  ;; position
+  (set! (-> obj root trans x) (-> p trans_x))
+  (set! (-> obj root trans y) (-> p trans_y))
+  (set! (-> obj root trans z) (-> p trans_z))
+  ;; rotation
+  (set! (-> obj root quat x)  (-> p quat_x))
+  (set! (-> obj root quat y)  (-> p quat_y))
+  (set! (-> obj root quat z)  (-> p quat_z))
+  (set! (-> obj root quat w)  (-> p quat_w))
+
+  (color-target obj (-> p color))
+
+  ;; additional steps for rotation, state, etc
+  (case (-> obj type)
+    ((target)
+      (let* ((t (the target obj)))
+
+        ;; zoomer rotation
+        (if (target-on-racer? t)
+          (set! (-> t racer rot y) (-> p zoomer_rot_y))
+          )
+
+        ;; draw usernames for all players
+        (if (or (= (-> *teamruns-pc-settings* ui-names) (name-display all))
+              (and (= (-> *teamruns-pc-settings* ui-names) (name-display team)) (is-teammate? (the int (-> (the-as target obj) saved-owner))))
+            )
+            (add-text-3d
+                          #t
+                          (bucket-id subtitle)
+                          (-> p username)
+                          (-> t root trans)
+                          (font-color white)
+                          (new 'static 'vector2h :y 16)
+                          )
+          )
+
+        ;; activate invuln for everyone and add nuka glitch for ghost targets
+        (logior! (-> t state-flags) (state-flags invulnerable))
+        (if (= (-> p mp_state) (mp-tgt-state mp-tgt-active))
+          (logior! (-> t state-flags) (state-flags dying))
+          )
+
+        ;; finalize rotation
+        (quaternion-copy! (-> t control dir-targ) (-> t root quat))
+
+        ;; sync target state
+        (if (and (-> t state name) (!= (-> t state name) (-> p tgt_state)) 
+                (or 
+                  (and (!= (-> p tgt_state) 'target-clone-anim) (!= (-> p tgt_state) 'target-racing-clone-anim) (!= (-> p tgt_state) 'target-flut-clone-anim)) 
+                  (and (= (-> p inter_type) (interaction-type game-task)) (= (-> p inter_status) 7)) ;; only allow fuel cells from 'target-clone-anim
+                )
+              (or
+                (not (-> *spectator-handler* is_spectator?))
+                (-> *spectator-handler* render_animations?)
+                )
+              )
+          (update-target-state (-> p tgt_state) t (-> p inter_name))
+          (update-transforms! (-> t control))
+          )
+        )
+        ;; cleanup after sync state as some states uses interaction, don't cleanup on warp out as we skip interactions during this to avoid crashes
+        (if (and *target* (!= (-> *target* state name) 'target-warp-out) (!= (-> p inter_type) (interaction-type none)))
+          (clean-up-interaction-data p)
+          )
+      )
+    ((money)
+      (let ((m (the money obj)))
+        (vector-copy! (-> m base) (-> m root trans))
+        (vector-copy! (-> m root root-prim world-sphere) (-> m root trans))
+        )
+      )
+    )
+    (none)
+  )
+
+(defun start-extra-target ()
+  (ppointer->handle (process-spawn
+                target
+                :init init-target
+                  (-> *game-info* current-continue)
+                :from *target-dead-pool*
+                :to *target-pool*
+                :stack *kernel-dram-stack*
+                ))
+  )
+
+(defun render-targets ()
+ (let ((target-count 0))
+    (dotimes (idx MAX_MULTIPLAYER_COUNT)
+      (cond
+        ((!= (-> *multiplayer-info* player_num) idx)
+          (when (!= (-> *multiplayer-info* players idx mp_state) (mp-tgt-state mp-tgt-disconnected))
+            ;; see if we need to spawn any remote targets
+            (when (or (zero? (-> *remote-targets* idx)) (not (handle->process (-> *remote-targets* idx))))
+              (set! (-> *remote-targets* idx) (start-extra-target))
+              (let ((remote-target (the-as target (handle->process (-> *remote-targets* idx)))))
+                (set! (-> remote-target saved-owner) idx) ;; used to identify remote index from target
+                (handle-new-mp-state idx remote-target)
+                )
+              )
+            ;; assume target spawned at this point 
+
+            ;; position/color remote targets
+            (let ((p (-> *multiplayer-info* players idx))
+                  (obj (the process-drawable (handle->process (-> *remote-targets* idx)))))
+              (when obj
+                (if (and *target* (!= (-> *target* state name) 'target-warp-out) ;; avoids potential portal softlocks 
+                      (or (is-interactive? idx) (-> *spectator-handler* is_spectator?))
+                      )
+                  (handle-remote-interaction p idx)
+                  )
+                (if (has-new-mp-state? idx)
+                  (handle-new-mp-state idx (the-as target obj))
+                  )
+                (update-actor-position obj p)
+                )
+              )
+              (set! target-count (+ target-count 1))
+            )
+          )
+        ;; self interactions
+        ((and *target* (!= (-> *target* state name) 'target-warp-out) (is-interactive? idx) (!= (-> *multiplayer-info* players idx inter_type) (interaction-type none)))
+          (handle-remote-interaction (-> *multiplayer-info* players idx) idx)
+          (clean-up-interaction-data (-> *multiplayer-info* players idx))
+          )
+        )
+      )
+    ;; despawn newly disconnected targets
+    (when (!= target-count *remote-target-active-count*)
+      (dotimes (idx MAX_MULTIPLAYER_COUNT)
+        (when (!= (-> *multiplayer-info* player_num) idx)
+          (when (= (-> *multiplayer-info* players idx mp_state) (mp-tgt-state mp-tgt-disconnected))
+            (deactivate-remote-target idx)
+            )
+          )
+        )
+      (set! *remote-target-active-count* target-count)
+      )
+    )
+  )
+
+
+(defun update-mp-state ()
+  (if (and (= *cheat-mode* #f) (= *debug-segment* #f))
+    (set! (-> *teamrun-info* debug_mode_active?) 0)
+    (set! (-> *teamrun-info* debug_mode_active?) 1)
+    )
+
+  (set! (-> *teamrun-info* cell_count) (the int32 (-> *game-info* fuel)))
+  (set! (-> *teamrun-info* buzzer_count) (the int32 (-> *game-info* buzzer-total)))
+  (set! (-> *teamrun-info* money_count) (the int32 (-> *game-info* money)))
+  (set! (-> *teamrun-info* death_count) (the int32 (-> *game-info* total-deaths)))
+
+  (set! (-> *teamrun-info* has_state_update?) 1)
+  (set! *has-none-position-update?* #t)
+(none)
+)
+
+
+(defun manual-position-update ((num int) (transX float) (transY float) (transZ float) (quatY float) (quatZ float) (quatW float) (state string))
+  (set! (-> *multiplayer-info* players num trans_x)    transX)
+  (set! (-> *multiplayer-info* players num trans_y)    transY)
+  (set! (-> *multiplayer-info* players num trans_z)    transZ)
+  (set! (-> *multiplayer-info* players num quat_y)     quatY)
+  (set! (-> *multiplayer-info* players num quat_z)     quatZ)
+  (set! (-> *multiplayer-info* players num quat_w)     quatW)
+  (set! (-> *multiplayer-info* players num tgt_state)  (string->symbol state))
+  (none)
+  )
+
+(defun execute-teamrun-command ()
+  (case (-> *multiplayer-info* teamrun_command)
+    (((teamrun-command mark-connected))
+      (set! *cheat-mode* #f)
+      (set! (-> *pc-settings* speedrunner-mode?) #t)
+      (set! (-> *self-player-info* color)  (tgt-color normal))
+      (set! (-> *pc-settings* ps2-actor-vis?) #f)
+      )
+    (((teamrun-command setup-run)) 
+      (initialize! *game-info* 'game (the-as game-save #f) (the-as string #f))
+      (set! *debug-segment* #f)
+      (set! *cheat-mode* #f)
+      (set! (-> *pc-settings* speedrunner-mode?) #t)
+      (set! *move-by-index-on-spawn* #t)
+      (start 'play (get-continue-by-name *game-info* "village1-hut"))
+      (set! (-> *time-of-day-proc* 0 time-ratio) 0.0)
+      (set! (-> *time-of-day-proc* 0 hour) 7)
+      (turnoffplayhints)
+      )
+    (((teamrun-command start-run))
+      (safe-release-from-grab)
+      (reset-speedrun-variables)
+      (if (not (-> *spectator-handler* is_spectator?))
+        (progress-fast-save-and-start-speedrun (speedrun-category full-game))
+        )
+      (set! (-> *pc-settings* ps2-actor-vis?) #f)
+      (set! *allow-cell-pickup?* #t)
+      (set! *allow-orb-pickup?* #t)
+      (set! *allow-fly-pickup?* #t)
+      (set! *allow-final-boss?* #t)
+      )
+    (((teamrun-command reset-game)) 
+      (set! (-> *game-info* mode) 'debug) ;;prevent jak from respawning
+      (initialize! *game-info* 'game (the-as game-save #f) (the-as string #f))
+      (set! (-> *game-info* mode) 'play)
+      )
+    (((teamrun-command reset-actors)) (reset-actors 'life))
+    (((teamrun-command trip)) (send-event *target* 'loading))
+    (((teamrun-command target-grab)) 
+      (process-grab? *target*)
+      (when (not (time-elapsed? (-> *game-info* game-start-time) (seconds 6.0)))
+        (set! (-> *pause-handler* active?) #t)
+        (set! (-> *pause-handler* active_time) (+ (current-time) (seconds 6.0)))
+        )
+      )
+    (((teamrun-command target-release)) (safe-release-from-grab))
+    (((teamrun-command temp-checkpoint-store)) (store-temp-checkpoint))
+    (((teamrun-command temp-checkpoint-load)) (spawn-temp-checkpoint))
+    (((teamrun-command enable-spectator-mode))
+        (set! (-> *spectator-handler* is_spectator?) #t)
+        (set! (-> *spectator-handler* has_found_initial_target?) #f)
+      )
+    (((teamrun-command disable-spectator-mode))
+      (when (-> *spectator-handler* is_spectator?)
+        (set! (-> *spectator-handler* spectator_idx) 0)
+        (set! (-> *spectator-handler* is_spectator?) #f)
+        (set! (-> *spectator-handler* has_found_initial_target?) #f)
+        (if (is-grabbed?) (process-release? *target*))
+        (send-event *camera* 'change-target *target*)
+        (camera-change-to (the-as string 'base) 300 #f)
+        )
+      )
+    (((teamrun-command on-remote-level-update)) (set! *run-remote-level-update-check-next-frame* #t))
+    (((teamrun-command enable-debug-mode))
+      (set! *debug-segment* #t)
+      (set! *cheat-mode* #t)
+      )
+    (((teamrun-command disable-debug-mode))
+      (set! *debug-segment* #f)
+      (set! *cheat-mode* #f)
+      )
+    (((teamrun-command disable-play-hints))
+      (turnoffplayhints)
+      )
+    )
+  (pc-clear-mp-command)
+  (none)
+  )
+
+  (defun multiplayer-main ()
+  (when (and (!= *target* #f) (!= *pause-multiplayer-logic* #t) (!= (-> (level-get-target-inside *level*) name) 'title))
+  
+    ;; setup our own remote-player-info if we haven't yet
+    (set-up-self-remote-if-null)
+
+    (when (and *target* (>= (-> *multiplayer-info* player_num) 0) (!= (-> *self-player-info* mp_state) (mp-tgt-state mp-tgt-disconnected)) (>= (-> *display* base-frame-counter) (-> *game-info* blackout-time)))
+
+      ;; inside other player check for collision re-enabling
+      (when (and *remote-stuck-released* (>= (-> *display* base-frame-counter) *remote-stuck-release-timestamp*) (!= (-> *target* state name) 'target-fishing))
+        (cond
+          ((any-interactive-remote-target-close-to-target? 6000.0)
+            (set! *remote-stuck-release-timestamp* (+ (current-time) (seconds 0.5)))
+            )
+          (else
+            (set! *remote-stuck-released* #f)
+            (logior! (-> *target* control root-prim collide-with) (collide-kind target-remote))
+            )
+          )
+        )
+
+      (check-set-interaction-from-buffer)
+
+      (when (not (string= (-> *multiplayer-info* force_continue) ""))
+        (start 'play (get-continue-by-name *game-info* (-> *multiplayer-info* force_continue)))
+        (set! (-> *multiplayer-info* force_continue) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+        )
+      (when *run-remote-level-update-check-next-frame*
+        (set! *run-remote-level-update-check-next-frame* #f)
+        (runs-on-level-enter)
+        )
+      (if (!= (-> *multiplayer-info* teamrun_command) (teamrun-command none)) (execute-teamrun-command))
+
+      ;; on player movement
+      (when (or *has-none-position-update?*
+          (!= (-> *self-player-info* trans_x) (-> *target* root trans x))
+          (!= (-> *self-player-info* trans_y) (-> *target* root trans y))
+          (!= (-> *self-player-info* trans_z) (-> *target* root trans z))
+          (!= (-> *self-player-info* tgt_state) (-> *target* state name))
+          )
+
+        ;; update this player's position
+        (update-self-multiplayer-info)
+        
+        ;; send updated player info to client
+        (pc-update-position)
+
+
+        ;; clean none position updates
+        (when *has-none-position-update?*
+          (set! *has-none-position-update?* #f)
+          
+          ;; update flags
+          (set! (-> *teamrun-info* has_state_update?) 0)
+          (set! (-> *teamrun-levels-info* has_level_update?) 0)
+          (set! (-> *teamrun-info* just_loaded?) 0)
+          (set! (-> *teamrun-info* just_saved?) 0)
+          (when (!= (-> *teamrun-info* just_spawned?) 0)
+            (set! (-> *teamrun-info* just_spawned?) 0)
+            (mp-after-jak-spawn)
+            )
+          )
+
+
+        (when (= (-> *multiplayer-info* players (-> *multiplayer-info* player_num) mp_state) (mp-tgt-state mp-tgt-disconnected))
+          (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) mp_state) (mp-tgt-state mp-tgt-interactive))
+          (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) mp_state_check) (mp-tgt-state mp-tgt-interactive))
+          )
+        )
+      
+      ;; cleanup self interaction data
+      (if (!= (-> *self-player-info* inter_type) (interaction-type none))
+        (clean-up-interaction-data *self-player-info*)
+        )
+
+      (render-targets)
+
+      ;; color ourselves
+      (color-target *target* (-> *self-player-info* color))
+
+      )
+
+    (when (not (paused?)) 
+      ;; render teamruns UI
+      (render-ingame-ui-main)
+
+      ;; handle spectator mode
+      (if (-> *spectator-handler* is_spectator?)
+        (spectator-mode-main)
+        )
+      )
+
+    )
+  
+  ;; TeamRuns taunt menu
+  (when (not *taunt-menu*)
+    (set! *taunt-menu* (process-spawn taunt-menu))
+    )
+    )

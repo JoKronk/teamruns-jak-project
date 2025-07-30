@@ -6,7 +6,7 @@
 (require "engine/common-obs/plat-button.gc")
 
 (define-extern process-close? (function process-drawable float basic))
-(define-extern any-interactive-targets-close? (function process-drawable float basic))
+(define-extern any-interactive-target-close? (function process-drawable float basic))
 
 ;; DECOMP BEGINS
 
@@ -378,7 +378,7 @@
             (draw-eco-beam (-> self root-overlay trans) (-> self beam-end))
             (update-trans! (-> self sound) (-> self root-overlay trans))
             (update! (-> self sound)))
-            ((not (any-interactive-targets-close? self (-> self info idle-distance)))
+            ((not (any-interactive-target-close? self (-> self info idle-distance)))
             (seek! (-> self float-height-offset) (-> self idle-offset) (* 16384.0 (seconds-per-frame)))
             (stop! (-> self sound))
             (if (= (-> self float-height-offset) (-> self idle-offset)) (go citb-chain-plat-settle))))))))

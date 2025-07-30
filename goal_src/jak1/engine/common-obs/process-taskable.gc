@@ -6,7 +6,7 @@
 (require "engine/game/task/task-control.gc")
 (require "engine/common-obs/collectables.gc")
 (require "engine/game/main.gc")
-(define-extern safe-deactivate-remote-cell (function none))
+(define-extern deactivate-remote-cell (function none))
 (define-extern cancel-current-spool-anim (function none))
 (define-extern *allow-cell-pickup?* symbol)
 
@@ -606,7 +606,7 @@
                   (if *allow-cell-pickup?* (print-game-text (lookup-text! *common-text* (-> self talk-message) #f) gp-1 #f 128 22)))
                 (if *allow-cell-pickup?*
                   (when (and (cpad-pressed? 0 circle) (process-grab? *target*))
-                    (safe-deactivate-remote-cell)
+                    (deactivate-remote-cell)
                     (logclear! (-> *cpad-list* cpads 0 button0-abs 0) (pad-buttons circle))
                     (logclear! (-> *cpad-list* cpads 0 button0-rel 0) (pad-buttons circle))
                     (send-event *target* 'trans 'save (-> self old-target-pos))

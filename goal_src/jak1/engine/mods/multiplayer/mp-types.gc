@@ -1,0 +1,239 @@
+;;-*-Lisp-*-
+(in-package goal)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; What is this file for.
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#|
+This contains type definitions for multiplayer logic.
+|#
+
+(defconstant MAX_USERNAME_LEN 100)
+(defconstant NOTIFIFCATION_STRING_LEN 100)
+(defconstant INTERACTION_STRING_LEN 32)
+
+
+(defmethod new remote-player-info ((allocation symbol) (type-to-make type))
+  (let ((obj (object-new allocation type-to-make (the-as int (-> type-to-make size)))))
+    (set! (-> obj username) (new 'global 'string MAX_USERNAME_LEN (the-as string #f)))
+    (set! (-> obj color) (tgt-color green))
+    (set! (-> obj trans_x) 0.0)
+    (set! (-> obj trans_y) 0.0)
+    (set! (-> obj trans_z) 0.0)
+    (set! (-> obj quat_x) 0.0)
+    (set! (-> obj quat_y) 0.0)
+    (set! (-> obj quat_z) 0.0)
+    (set! (-> obj quat_w) 0.0)
+    (set! (-> obj zoomer_rot_y) 0.0)
+    (set! (-> obj inter_type) (interaction-type none))
+    (set! (-> obj inter_amount) 0.0)
+    (set! (-> obj inter_name) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj inter_parent) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj inter_level) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj inter_cleanup) 0)
+    (set! (-> obj current_level) 'village1)
+    (set! (-> obj tgt_state) 'invalid)
+    (set! (-> obj cells_collected) 0)
+    (set! (-> obj team_id) -1)
+    obj
+    )
+  )
+
+
+(deftype interaction-info (structure)
+ ((has_update? symbol)
+  (type     interaction-type)
+  (amount   float)
+  (status   float)
+  (ename    string)
+  (parent   string)
+  (level    string)
+  )
+  :pack-me
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )
+
+(defmethod new interaction-info ((allocation symbol) (type-to-make type))
+  (let ((obj (object-new allocation type-to-make (the-as int (-> type-to-make size)))))
+    (set! (-> obj has_update?) #f)
+    (set! (-> obj type) (interaction-type none))
+    (set! (-> obj amount) 0.0)
+    (set! (-> obj status) 0.0)
+    (set! (-> obj ename) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj parent) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj level) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    obj
+    )
+  )
+
+
+(deftype teamrun-player-info (structure)
+ (
+  ;; state updates
+  (has_state_update?  int32)
+  (debug_mode_active? int32)
+  (just_spawned?      int32)
+  (just_loaded?       int32)
+  (just_saved?        int32)
+  (current_continue   string)
+  (cell_count         int32)
+  (buzzer_count       int32)
+  (money_count        int32)
+  (death_count        int32)
+  )
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )
+
+(defmethod new teamrun-player-info ((allocation symbol) (type-to-make type))
+  (let ((obj (object-new allocation type-to-make (the-as int (-> type-to-make size)))))
+    (set! (-> obj has_state_update?) 0)
+    (set! (-> obj debug_mode_active?) 0)
+    (set! (-> obj just_spawned?) 0)
+    (set! (-> obj just_loaded?) 0)
+    (set! (-> obj just_saved?) 0)
+    (set! (-> obj current_continue) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj cell_count) 0)
+    (set! (-> obj buzzer_count) 0)
+    (set! (-> obj money_count) 0)
+    (set! (-> obj death_count) 0)
+    obj
+    )
+  )
+
+(defmethod new game-mode ((allocation symbol) (type-to-make type))
+  (let ((obj (object-new allocation type-to-make (the-as int (-> type-to-make size)))))
+    (set! (-> obj mode) (run-mode speedrun))
+    (set! (-> obj category) (run-category no-lts))
+    (set! (-> obj require_same_level) 0)
+    (set! (-> obj allow_solo_hub_zoomers) 1)
+    (set! (-> obj no_lts) 0)
+    (set! (-> obj citadel_skip_version) (citadel-skip-version normal))
+    (set! (-> obj free_for_all) 0)
+    (set! (-> obj enable_pvp) 0)
+    obj
+    )
+  )
+
+(defmethod new timer-info ((allocation symbol) (type-to-make type))
+  (let ((obj (object-new allocation type-to-make (the-as int (-> type-to-make size)))))
+    (set! (-> obj hours) 0)
+    (set! (-> obj minutes) 0)
+    (set! (-> obj seconds) 0)
+    (set! (-> obj milliseconds) 0)
+    (set! (-> obj split_time) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj split_name) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj split_player) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj split_timesave) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    obj
+    )
+  )
+
+(defmethod new notification-info ((allocation symbol) (type-to-make type))
+  (let ((obj (object-new allocation type-to-make (the-as int (-> type-to-make size)))))
+    (set! (-> obj has_notif?) 0)
+    (set! (-> obj message) (new 'global 'string NOTIFIFCATION_STRING_LEN (the-as string #f)))
+    (set! (-> obj time) 0)
+    obj
+    )
+  )
+
+
+(deftype zoomer-level-unlocks (structure)
+ (
+  ;; state updates
+  (fire-canyon    symbol)
+  (mountain-pass  symbol)
+  (lava-tube      symbol)
+  )
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )
+
+(defmethod new zoomer-level-unlocks ((allocation symbol) (type-to-make type))
+  (let ((obj (object-new allocation type-to-make (the-as int (-> type-to-make size)))))
+    (set! (-> obj fire-canyon) #f)
+    (set! (-> obj mountain-pass) #f)
+    (set! (-> obj lava-tube) #f)
+    obj
+    )
+  )
+
+(defmethod new time-handler ((allocation symbol) (type-to-make type))
+  (let ((obj (object-new allocation type-to-make (the-as int (-> type-to-make size)))))
+    (set! (-> obj active?) #f)
+    (set! (-> obj active_time) 0)
+    obj
+    )
+  )
+
+
+(deftype game-levels-info (structure)
+ ((has_level_update?    int32)
+ 
+  (level0_name   string)
+  (level0_status string)
+
+  (level1_name   string)
+  (level1_status string)
+  )
+  :pack-me
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )
+
+(defmethod new game-levels-info ((allocation symbol) (type-to-make type))
+  (let ((obj (object-new allocation type-to-make (the-as int (-> type-to-make size)))))
+    (set! (-> obj has_level_update?) 0)
+    (set! (-> obj level0_name) (new 'global 'string 32 (the-as string #f)))
+    (set! (-> obj level0_status) (new 'global 'string 32 (the-as string #f)))
+
+    (set! (-> obj level1_name) (new 'global 'string 32 (the-as string #f)))
+    (set! (-> obj level1_status) (new 'global 'string 32 (the-as string #f)))
+    obj
+    )
+  )
+
+(defmethod new multiplayer-info ((allocation symbol) (type-to-make type))
+  (let ((obj (object-new allocation type-to-make (the-as int (-> type-to-make size)))))
+    (set! (-> obj teamrun_command) (teamrun-command none))
+    (set! (-> obj force_continue) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj client_version) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj player_num) -1)
+    (dotimes (idx MAX_MULTIPLAYER_COUNT)
+      (set! (-> obj players idx username) (new 'global 'string MAX_USERNAME_LEN ""))
+      (set! (-> obj players idx inter_name) (new 'global 'string INTERACTION_STRING_LEN ""))
+      (set! (-> obj players idx inter_parent) (new 'global 'string INTERACTION_STRING_LEN ""))
+      (set! (-> obj players idx inter_level) (new 'global 'string INTERACTION_STRING_LEN ""))
+      )
+    (set! (-> obj game mode) (run-mode speedrun))
+    (set! (-> obj game category) (run-category no-lts))
+    (set! (-> obj game require_same_level) 1)
+    (set! (-> obj game allow_solo_hub_zoomers) 1)
+    (set! (-> obj game no_lts) 0)
+    (set! (-> obj game citadel_skip_version) (citadel-skip-version normal))
+    (set! (-> obj game free_for_all) 0)
+    (set! (-> obj game enable_pvp) 0)
+
+    (set! (-> obj timer hours) 0)
+    (set! (-> obj timer minutes) 0)
+    (set! (-> obj timer seconds) 0)
+    (set! (-> obj timer milliseconds) 0)
+    (set! (-> obj timer split_time) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj timer split_name) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj timer split_player) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj timer split_timesave) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    
+    (set! (-> obj notification has_notif?) 0)
+    (set! (-> obj notification message) (new 'global 'string NOTIFIFCATION_STRING_LEN (the-as string #f)))
+    (set! (-> obj notification time) 0)
+    obj
+    )
+  )

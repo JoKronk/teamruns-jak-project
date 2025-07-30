@@ -1,0 +1,29 @@
+;;-*-Lisp-*-
+(in-package goal)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; What is this file for.
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#|
+This is functions to be removed into their own mods in the future.
+|#
+
+
+(defun check-lockout-restrictions ()
+  (let ((level-name (symbol->string (-> (level-get-target-inside *level*) name)))
+        (has-most-cells (team-has-most-cells?))
+      )
+    (set! *allow-final-boss?* has-most-cells)
+    (when (string= level-name "finalboss")
+      (when has-most-cells 
+        (set! (-> (the-as plat-eco-finalboss (process-by-ename "plat-eco-finalboss-1")) speed) 0.1)
+        )
+      (when (not has-most-cells)
+        (set-continue! *game-info* "finalboss-start")
+        (set! (-> (the-as plat-eco-finalboss (process-by-ename "plat-eco-finalboss-1")) speed) 0.0)
+        )
+      )
+    )
+  )

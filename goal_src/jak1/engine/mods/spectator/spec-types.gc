@@ -1,0 +1,20 @@
+
+
+(defmethod new spectator-handler ((allocation symbol) (type-to-make type))
+  (let ((obj (object-new allocation type-to-make (the-as int (-> type-to-make size)))))
+    (set! (-> obj is_spectator?) #f)
+    (set! (-> obj spectator_idx) 0)
+    (set! (-> obj has_found_initial_target?) #f)
+    (set! (-> obj refocus_dist) 200000.0)
+    (set! (-> obj is_refocusing?) #f)
+    (set! (-> obj next_logic_check) 0)
+    (set! (-> obj last_level_slot_used) 0)
+    (set! (-> obj next_level_check) 0)
+    (set! (-> obj in_level_check_wait?) #f)
+    (set! (-> obj full_new_level?) #f)
+    (set! (-> obj next_vis_nick_check) 0)
+    (set! (-> obj check_vis_nick?) #f)
+    (set! (-> obj render_animations?) #t)
+    obj
+    )
+  )

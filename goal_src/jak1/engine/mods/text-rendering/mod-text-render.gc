@@ -1,9 +1,13 @@
-    ;;-*-Lisp-*-
-    (in-package goal)
+;;-*-Lisp-*-
+(in-package goal)
 
-    ;; name: mod-text-render.gc
-    ;; name in dgo: mod-text-render
-    ;; dgos: TODO
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; What is this file for.
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#|
+Contains logic for rendering text, this is still quite tailored towards teamruns and could be modified a bit.
+|#
 
 
 (define *selector-option* (selector-option teams))
@@ -112,32 +116,6 @@
     )
    )
   #f
-  )
-
-(defun level-name->display-name ((level-name symbol))
-  (case level-name
-    (('lavatube) "Lava Tube")
-    (('beach) "Beach")
-    (('citadel) "Citadel")
-    (('darkcave) "Dark Cave")
-    (('finalboss) "Final Boss")
-    (('firecanyon) "Fire Canyon")
-    (('jungle) "FJ")
-    (('jungleb) "FJ Temple")
-    (('maincave) "Spider Cave")
-    (('misty) "Misty")
-    (('ogre) "MP")
-    (('robocave) "Robot Cave")
-    (('rolling) "Basin")
-    (('snow) "Snowy")
-    (('sunken) "LPC Top")
-    (('sunkenb) "LPC Bottom")
-    (('swamp) "Boggy")
-    (('training) "Geyser")
-    (('village1) "Sandover")
-    (('village2) "Rock Village")
-    (('village3) "Crater")
-    )
   )
 
 (defun render-player-ui ((dma-buf dma-buffer))
@@ -441,6 +419,7 @@
     )
   )
 
+;; main logic loop for on screen text rendering
 (defun render-ingame-ui-main ()
   (check-for-ui-input)
   (render-ui)

@@ -1,6 +1,15 @@
 ;;-*-Lisp-*-
 (in-package goal)
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; What is this file for.
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#|
+This file handles the logic for taunts in multiplayer.
+|#
+
 (defun-extern add-interaction-to-buffer interaction-type float float string string string none)
 
 (deftype taunt (structure)

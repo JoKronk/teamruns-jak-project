@@ -7,7 +7,7 @@
 (require "engine/camera/pov-camera-h.gc")
 (require "engine/common-obs/basebutton.gc")
 
-(define-extern remove-remote-collision (function float none))
+(define-extern temp-disable-remote-collision (function float none))
 
 ;; DECOMP BEGINS
 
@@ -24,7 +24,7 @@
         exit)
   :trans
     (behavior ()
-      (remove-remote-collision 5.0)
+      (temp-disable-remote-collision 5.0)
       (set! (-> self control transv x) (- (-> self control unknown-vector103 x) (-> self control unknown-vector102 x)))
       (set! (-> self control transv z) (- (-> self control unknown-vector103 z) (-> self control unknown-vector102 z)))
       (vector-xz-normalize! (-> self control transv) 49152.0)

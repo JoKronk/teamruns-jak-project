@@ -1,10 +1,6 @@
 ;;-*-Lisp-*-
 (in-package goal)
 
-;; name: mod-settings-h.gc
-;; name in dgo: mod-settings-h
-;; dgos: TODO
-
 (defenum mp-tgt-state
   :type uint32
   (mp-tgt-disconnected)

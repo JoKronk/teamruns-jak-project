@@ -1,13 +1,70 @@
-    ;;-*-Lisp-*-
-    (in-package goal)
+;;-*-Lisp-*-
+(in-package goal)
 
-    ;; name: mod-spectator-mode.gc
-    ;; name in dgo: mod-spectator-mode
-    ;; dgos: TODO
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; What is this file for.
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#|
+
+|#
+
 
 (define *spectator-handler* (new 'global 'spectator-handler))
 
-(defun select-new-spectator ((search-forward symbol))
+;; get the target currently being spectated
+(defun get-spectator-target ()
+  (if (and (-> *spectator-handler* is_spectator?) (nonzero? (-> *remote-targets* (-> *spectator-handler* spectator_idx))) (handle->process (-> *remote-targets* (-> *spectator-handler* spectator_idx))))
+    (get-target (-> *spectator-handler* spectator_idx))
+    *target*
+    )
+  )
+
+;; get prefered level slot to force load the next level in
+(defun get-preferable-level-slot ()
+  (cond
+    ((or (not (-> *load-state* want 0)) (not (is-valid-level? (-> *load-state* want 0 name))))
+      0
+      )
+    ((or (not (-> *load-state* want 1)) (not (is-valid-level? (-> *load-state* want 1 name))))
+      1
+      )
+    ((not (is-level-alive? (-> *load-state* want 0 name)))
+      0
+      )
+    ((not (is-level-alive? (-> *load-state* want 1 name)))
+      1
+      )
+    ((= (-> *load-state* want 0 display?) #f)
+      0
+      )
+    ((= (-> *load-state* want 1 display?) #f)
+      1
+      )
+    (else 
+      (let ((current-level (get-target-active-level (get-spectator-target))))
+        (cond
+          ((!= current-level #f)
+            (if (= (-> *load-state* want 0 name) current-level)
+              1
+              0
+              )
+            )
+            (else
+            (if (and (-> *spectator-handler* is_spectator?) (= (-> *spectator-handler* last_level_slot_used) 0))
+                1
+                0
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+;; gets the next traget to spectate
+(defun get-next-spectator-target ((search-forward symbol))
   (let ((selected-target (get-target (-> *spectator-handler* spectator_idx)))
         (original-index (-> *spectator-handler* spectator_idx)))
     (if (not selected-target)
@@ -72,8 +129,9 @@
     )
   )
 
+;; changes spectator target
 (defun change-spectator ((search-forward symbol) (force-refocus symbol))
-  (let ((spec-target (select-new-spectator search-forward)))
+  (let ((spec-target (get-next-spectator-target search-forward)))
     (when (and spec-target (!= spec-target *target*))
       (send-event *camera* 'change-target spec-target)
       (when force-refocus
@@ -86,6 +144,7 @@
     )
   )
 
+;; forces every target into target-stance
 (defun force-stance-all ()
   (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
     (let ((tgt (get-target tgt-idx)))
@@ -95,7 +154,9 @@
       )
     )
   )
+  
 
+;; main logic loop for spectator mode, should run every frame spectator mode is active
 (defun spectator-mode-main ()
   ;;ensure grabbed
   (if (not (is-grabbed?))
@@ -247,4 +308,3 @@
       )
     )
   )
-  

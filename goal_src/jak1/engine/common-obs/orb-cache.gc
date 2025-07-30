@@ -4,7 +4,7 @@
 (require "engine/common-obs/collectables.gc")
 (require "engine/common-obs/baseplat.gc")
 
-(define-extern any-interactive-targets-close? (function process-drawable float basic))
+(define-extern any-interactive-target-close? (function process-drawable float basic))
 (define-extern get-closest-interactive-target-with-blue-eco (function process-drawable target))
 
 ;; DECOMP BEGINS
@@ -149,7 +149,7 @@
                 (ppointer->handle (process-spawn money :init money-init-by-other-no-bob s4-1 *null-vector* 5 1.0 (-> self entity) :to self)))))
       (loop
         (calculate-pos self #t)
-        (while (not (or (not *target*) (not (any-interactive-targets-close? self (-> self inactive-distance)))))
+        (while (not (or (not *target*) (not (any-interactive-target-close? self (-> self inactive-distance)))))
           (pos-logic self #t)
           (suspend))
         (calculate-pos self #f)
