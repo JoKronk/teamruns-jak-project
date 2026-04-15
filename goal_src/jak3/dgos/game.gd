@@ -489,4 +489,8 @@
   "debris.o"
   "shield-sphere.o"
   "entity-debug.o" ;; added
+  "mod-settings-h.o" ;; multiplayer types
+  "mod-settings.o" ;; multiplayer globals
+  "mod-game-handler.o" ;; multiplayer handler
+  "mod-custom-code.o" ;; multiplayer frame loop
  ))

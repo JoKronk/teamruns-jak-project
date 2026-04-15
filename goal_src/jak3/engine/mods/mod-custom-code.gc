@@ -1,0 +1,141 @@
+;;-*-Lisp-*-
+(in-package goal)
+
+;; name: mod-custom-code.gc
+;; name in dgo: mod-custom-code
+;; dgos: GAME
+
+;; Multiplayer-enabled custom code for Jak 3
+
+(defun update-state ()
+  (if (and (= *cheat-mode* #f) (= *debug-segment* #f))
+    (set! (-> *teamrun-info* debug_mode_active?) 0)
+    (set! (-> *teamrun-info* debug_mode_active?) 1)
+    )
+
+  ;; Jak 3 game-info fields
+  (set! (-> *teamrun-info* cell_count) (the int32 (-> *game-info* fuel)))
+  (set! (-> *teamrun-info* buzzer_count) (the int32 (-> *game-info* gem)))
+  (set! (-> *teamrun-info* money_count) (the int32 (-> *game-info* money)))
+  (set! (-> *teamrun-info* death_count) (the int32 (-> *game-info* total-deaths)))
+
+  (set! (-> *teamrun-info* has_state_update?) 1)
+  (set! *has-none-position-update?* #t)
+  (none)
+  )
+
+(defun init-multiplayer ()
+  (when (not *self-setup-completed*)
+    (pc-connect-mp-info *multiplayer-info* *self-player-info* *teamrun-info* *teamrun-levels-info*)
+    (set! *self-setup-completed* #t)
+    (format 0 "Jak 3 Multiplayer initialized~%")
+    )
+  (none)
+  )
+
+(defun update-self-multiplayer-info ()
+  (when (and *target* *self-setup-completed*)
+    (set! (-> *self-player-info* trans_x) (-> *target* control trans x))
+    (set! (-> *self-player-info* trans_y) (-> *target* control trans y))
+    (set! (-> *self-player-info* trans_z) (-> *target* control trans z))
+
+    (set! (-> *self-player-info* quat_x) (-> *target* control root-override quat x))
+    (set! (-> *self-player-info* quat_y) (-> *target* control root-override quat y))
+    (set! (-> *self-player-info* quat_z) (-> *target* control root-override quat z))
+    (set! (-> *self-player-info* quat_w) (-> *target* control root-override quat w))
+
+    (when (-> *target* state)
+      (set! (-> *self-player-info* tgt_state) (-> *target* state name))
+      )
+
+    (when (level-get-target-inside *level*)
+      (when (!= (-> *self-player-info* current_level) (-> (level-get-target-inside *level*) name))
+        (set! (-> *self-player-info* current_level) (-> (level-get-target-inside *level*) name))
+        (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) current_level) (-> *self-player-info* current_level))
+        )
+      )
+
+    (set! (-> *teamrun-levels-info* has_level_update?) 1)
+
+    (update-state)
+    (pc-update-position)
+    )
+  (none)
+  )
+
+(defun runs-on-level-enter ()
+  (when (and *target* *self-setup-completed* (!= (-> (level-get-target-inside *level*) name) 'title))
+    (when (!= (-> *self-player-info* current_level) (-> (level-get-target-inside *level*) name))
+      (set! (-> *self-player-info* current_level) (-> (level-get-target-inside *level*) name))
+      (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) current_level) (-> *self-player-info* current_level))
+      )
+    (set! *allow-cell-pickup?* (or (= (-> *multiplayer-info* game require_same_level) 0) (all-teammates-in-same-level?)))
+    (set! *allow-orb-pickup?* (or (= (-> *multiplayer-info* game require_same_level) 0) (all-teammates-in-same-level?)))
+    )
+  (none)
+  )
+
+(defun runs-every-frame ()
+  (when (and *target* (not *self-setup-completed*))
+    (init-multiplayer)
+    )
+
+  (when *self-setup-completed*
+    (execute-teamrun-command)
+
+    (when (not *pause-multiplayer-logic*)
+      (update-self-multiplayer-info)
+      )
+    )
+
+  (none)
+  )
+
+(defun runs-on-jak-spawn ()
+  (when *self-setup-completed*
+    (set! (-> *teamrun-info* just_spawned?) 1)
+    (update-state)
+    )
+  (none)
+  )
+
+(defun runs-on-jak-death ((death-event symbol))
+  (when *self-setup-completed*
+    (update-state)
+    )
+  (none)
+  )
+
+(defun runs-on-save ((save-event symbol))
+  (case save-event
+    (('save-start)
+      (set! *pause-multiplayer-logic* #t)
+      )
+    (('save-end)
+      (set! *pause-multiplayer-logic* #f)
+      (set! *player-can-load* #t)
+      (set! (-> *teamrun-info* just_saved?) 1)
+      (update-state)
+      )
+    )
+  (none)
+  )
+
+(defun runs-on-load ((load-event symbol))
+  (case load-event
+    (('load-start)
+      (set! *pause-multiplayer-logic* #t)
+      )
+    (('load-end)
+      (set! *pause-multiplayer-logic* #f)
+      (set! (-> *teamrun-info* just_loaded?) 1)
+      (update-state)
+      )
+    )
+  (none)
+  )
+
+(defun runs-on-debug-toggle ()
+  (update-state)
+  (none)
+  )

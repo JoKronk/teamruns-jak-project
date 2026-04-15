@@ -436,3 +436,8 @@
 (define-extern *pc-settings-built-sha* string)
 
 (define-extern alloc-vagdir-names (function symbol (pointer uint64)))
+
+;; Multiplayer WebSocket functions (registered from C++ in kmachine.cpp)
+(define-extern pc-connect-mp-info (function multiplayer-info remote-player-info teamrun-player-info game-levels-info none))
+(define-extern pc-clear-mp-command (function none))
+(define-extern pc-update-position (function none))
