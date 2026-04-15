@@ -331,6 +331,7 @@
   "menu.o"
   "popup-menu.o" ;; added
   "speedruns.o" ;; added
+  "mod-settings-h.o" ;; multiplayer types
   "drawable.o"
   "drawable-group.o"
   "drawable-inline-array.o"
@@ -467,6 +468,7 @@
   "cty-guard-turret-button.o"
   "entity-debug.o" ;; added
   "mod-settings.o" ;; added ;;mod-base-change
+  "mod-game-handler.o" ;; multiplayer
   "mod-common-functions.o" ;; added
   "orb-placer.o"  ;; added
   "mod-custom-code.o" ;; added

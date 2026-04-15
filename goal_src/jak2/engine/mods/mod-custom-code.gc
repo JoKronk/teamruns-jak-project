@@ -1,119 +1,211 @@
-    ;;-*-Lisp-*-
-    (in-package goal)
+;;-*-Lisp-*-
+(in-package goal)
 
-    ;; name: mod-custom-code.gc
-    ;; name in dgo: mod-custom-code
-    ;; dgos: TODO
+;; name: mod-custom-code.gc
+;; name in dgo: mod-custom-code
+;; dgos: GAME
 
+;; Multiplayer-enabled custom code for Jak 2
 
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;; What is this file for.
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Multiplayer State Updates
+;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    #| This file contains function defenitions that are pre placed in the mod base,
-    so if you place custom code inside of these functions, it will exectue based on
-    the name of the function, for example, if you place (set! (-> *game-info* fuel) (+ (-> *game-info* fuel) 1))
-    to the function named runs-on-orb-pickup, then jaks powercell count will increase each time you collect
-    an orb |#
+(defun update-state ()
+  (if (and (= *cheat-mode* #f) (= *debug-segment* #f))
+    (set! (-> *teamrun-info* debug_mode_active?) 0)
+    (set! (-> *teamrun-info* debug_mode_active?) 1)
+    )
 
+  ;; Jak 2 uses different game-info fields than Jak 1
+  (set! (-> *teamrun-info* cell_count) (the int32 (-> *game-info* fuel)))      ;; missions/cells
+  (set! (-> *teamrun-info* buzzer_count) (the int32 (-> *game-info* gem)))      ;; skull gems
+  (set! (-> *teamrun-info* money_count) (the int32 (-> *game-info* money)))     ;; precursor orbs
+  (set! (-> *teamrun-info* death_count) (the int32 (-> *game-info* total-deaths)))
 
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;; Begin function defintions.
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
+  (set! (-> *teamrun-info* has_state_update?) 1)
+  (set! *has-none-position-update?* #t)
+  (none)
+  )
 
-    (defun runs-every-frame ()
-      ;; (increase-power-cell-by-one) This is a call to increase-power-cell-by-one defined in mod-common-functions.gc
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Multiplayer Initialization
+;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-      ;; Sample code to turn jak pink whenever he's doing the jetboard hover glitch
-      ;; (when *target* 
-      ;;   (if (board-hovering?)
-      ;;     (draw-pink *target*)
-      ;;     (draw-normal *target*)
-      ;;     )
-      ;;   )
+(defun init-multiplayer ()
+  (when (not *self-setup-completed*)
+    (pc-connect-mp-info *multiplayer-info* *self-player-info* *teamrun-info* *teamrun-levels-info*)
+    (set! *self-setup-completed* #t)
+    (format 0 "Jak 2 Multiplayer initialized~%")
+    )
+  (none)
+  )
 
-      (if *show-input-display* 
-        (input-display-on)
-        (input-display-off)
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Self Position Update
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun update-self-multiplayer-info ()
+  (when (and *target* *self-setup-completed*)
+    ;; update position from target transform
+    (set! (-> *self-player-info* trans_x) (-> *target* control trans x))
+    (set! (-> *self-player-info* trans_y) (-> *target* control trans y))
+    (set! (-> *self-player-info* trans_z) (-> *target* control trans z))
+
+    ;; update quaternion from target root
+    (set! (-> *self-player-info* quat_x) (-> *target* control root-override quat x))
+    (set! (-> *self-player-info* quat_y) (-> *target* control root-override quat y))
+    (set! (-> *self-player-info* quat_z) (-> *target* control root-override quat z))
+    (set! (-> *self-player-info* quat_w) (-> *target* control root-override quat w))
+
+    ;; update animation state
+    (when (-> *target* state)
+      (set! (-> *self-player-info* tgt_state) (-> *target* state name))
+      )
+
+    ;; update current level
+    (when (level-get-target-inside *level*)
+      (when (!= (-> *self-player-info* current_level) (-> (level-get-target-inside *level*) name))
+        (set! (-> *self-player-info* current_level) (-> (level-get-target-inside *level*) name))
+        (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) current_level) (-> *self-player-info* current_level))
         )
+      )
 
-      (when *debug-segment*
-        (orb-placer-maintenance)
+    ;; update level loading info
+    (set! (-> *teamrun-levels-info* has_level_update?) 1)
+
+    (update-state)
+    (pc-update-position)
+    )
+  (none)
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Level Entry Hook
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun runs-on-level-enter ()
+  (when (and *target* *self-setup-completed* (!= (-> (level-get-target-inside *level*) name) 'title))
+    (when (!= (-> *self-player-info* current_level) (-> (level-get-target-inside *level*) name))
+      (set! (-> *self-player-info* current_level) (-> (level-get-target-inside *level*) name))
+      (set! (-> *multiplayer-info* players (-> *multiplayer-info* player_num) current_level) (-> *self-player-info* current_level))
+      )
+    (set! *allow-cell-pickup?* (or (= (-> *multiplayer-info* game require_same_level) 0) (all-teammates-in-same-level?)))
+    (set! *allow-orb-pickup?* (or (= (-> *multiplayer-info* game require_same_level) 0) (all-teammates-in-same-level?)))
+    )
+  (none)
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Main Frame Loop
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun runs-every-frame ()
+  ;; Initialize multiplayer connection if not yet done
+  (when (and *target* (not *self-setup-completed*))
+    (init-multiplayer)
+    )
+
+  ;; Process multiplayer commands
+  (when *self-setup-completed*
+    (execute-teamrun-command)
+
+    ;; Update and send position if not paused
+    (when (not *pause-multiplayer-logic*)
+      (update-self-multiplayer-info)
+      )
+    )
+
+  ;; Input display
+  (if *show-input-display*
+    (input-display-on)
+    (input-display-off)
+    )
+
+  (when *debug-segment*
+    (orb-placer-maintenance)
+    )
+
+  (none)
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Game Event Hooks
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun runs-on-gem-pickup ()
+  (when *self-setup-completed*
+    (update-state)
+    )
+  (none)
+  )
+
+(defun runs-on-task-close ()
+  (when *self-setup-completed*
+    (update-state)
+    )
+  (none)
+  )
+
+(defun runs-on-eco-pickup ((eco-type pickup-type) (parent process-tree))
+  (when *self-setup-completed*
+    (update-state)
+    )
+  (none)
+  )
+
+(defun runs-on-jak-spawn ()
+  (when *self-setup-completed*
+    (set! (-> *teamrun-info* just_spawned?) 1)
+    (update-state)
+    )
+  (none)
+  )
+
+(defun runs-on-jak-death ((death-event symbol))
+  (when *self-setup-completed*
+    (case death-event
+      (('dying)
+        (update-state)
         )
-      
-      (none)
-      )
-
-    (defun runs-on-gem-pickup ()
-      ;; Code here runs on any scout fly pickup
-
-      (none)
-      )
-
-    (defun runs-on-task-close ()
-    
-
-      (none)
-      )
-
-    (defun runs-on-eco-pickup ((eco-type pickup-type) (parent process-tree))
-      (let* ((from-vent? #f))
-        ;; Code here runs as soon as you pickup ANY eco
-
-        (case eco-type
-          (((pickup-type eco-yellow))      
-            ;; Code here runs as soon as you pickup yellow eco
-
-            )
-          (((pickup-type eco-red))      
-            ;; Code here runs as soon as you pickup red eco
-
-            )
-          (((pickup-type eco-blue))      
-            ;; Code here runs as soon as you pickup blue eco
-
-            )
-
-          (((pickup-type eco-green))      
-            ;; Code here runs as soon as you pickup big green eco 
-
-            )
-          )
-        
-        (when from-vent?
-          ;; Code here runs only if the eco was picked up from a vent
-
-          )
+      (('blackout)
+        (update-state)
         )
-
-      (none)
       )
+    )
+  (none)
+  )
 
-    (defun runs-on-jak-spawn ()
-      ;; Code here runs every time jak spawns (loading a file new game or death)   
-
-      (none)
+(defun runs-on-save ((save-event symbol))
+  (case save-event
+    (('save-start)
+      (set! *pause-multiplayer-logic* #t)
       )
-
-    (defun runs-on-jak-death ((death-event symbol))
-      (case death-event
-        (('dying)
-          ;; Code here runs immediately every time jak dies, before any death animation or death cutscene
-          
-          )
-        (('blackout)
-          ;; Code here runs after jak dies (and any death cutscene finishes), during the blackout before he spawns
-
-          )
-        )
-      
-      (none)
+    (('save-end)
+      (set! *pause-multiplayer-logic* #f)
+      (set! *player-can-load* #t)
+      (set! (-> *teamrun-info* just_saved?) 1)
+      (update-state)
       )
+    )
+  (none)
+  )
 
+(defun runs-on-load ((load-event symbol))
+  (case load-event
+    (('load-start)
+      (set! *pause-multiplayer-logic* #t)
+      )
+    (('load-end)
+      (set! *pause-multiplayer-logic* #f)
+      (set! (-> *teamrun-info* just_loaded?) 1)
+      (update-state)
+      )
+    )
+  (none)
+  )
 
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;; deprecated function defintions.
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    #| these are no longer recommended/supported however we include them anyways to not break anyones mods.
-    |#
+(defun runs-on-debug-toggle ()
+  (update-state)
+  (none)
+  )

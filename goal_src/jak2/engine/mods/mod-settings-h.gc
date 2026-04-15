@@ -1,0 +1,305 @@
+;;-*-Lisp-*-
+(in-package goal)
+
+;; name: mod-settings-h.gc
+;; name in dgo: mod-settings-h
+;; dgos: GAME
+
+;; Multiplayer type definitions for Jak 2
+;; Ported from Jak 1 teamruns multiplayer system
+
+(defenum mp-tgt-state
+  :type uint32
+  (mp-tgt-disconnected)
+  (mp-tgt-active)
+  (mp-tgt-interactive)
+  )
+
+(defun mp-tgt-state->string ((cmd mp-tgt-state))
+  (enum->string mp-tgt-state cmd)
+  )
+
+(defenum tgt-color
+  :type uint32
+  (normal)
+  (green)
+  (blue)
+  (red)
+  (yellow)
+  (white)
+  (black)
+  (purple)
+  (pink)
+  (light-blue)
+  (max)
+  )
+
+(defun tgt-color->string ((cmd tgt-color))
+  (enum->string tgt-color cmd)
+  )
+
+;; Interaction types for Jak 2 - adapted from Jak 1
+;; Follows pickup-type structure where relevant
+(defenum interaction-type
+  :type int32
+  (none)
+  (eco-yellow)
+  (eco-red)
+  (eco-blue)
+  (eco-dark)
+  (eco-green)
+  (money)          ;; precursor orbs
+  (game-task)      ;; mission completion
+  (enemy-death)
+  (gem)            ;; skull gems
+  (crate)
+  (skill)          ;; skill points / precursor orbs in open world
+  (gun-ammo)
+  (health)
+  (boss-phase)
+  (taunt)
+  )
+
+(defenum crate-type
+  :type int32
+  (crate-normal)
+  (crate-iron)
+  (crate-steel)
+  (crate-darkeco)
+  )
+
+(defenum run-category
+  :type int32
+  (custom)
+  (any-percent)
+  (all-missions)
+  (hundo)
+  (orbless)
+  (all-orbs)
+  )
+
+(defenum run-mode
+  :type int32
+  (speedrun)
+  (lockout)
+  (casual)
+  )
+
+(defenum selector-option
+  :type int32
+  (teams)
+  (splits)
+  (timer)
+  (names)
+  )
+
+(defenum name-display
+  :type uint32
+  (none)
+  (team)
+  (all)
+  )
+
+(defenum teamrun-command
+  :type int32
+  (none)
+  (mark-connected)
+  (setup-run)
+  (start-run)
+  (reset-game)
+  (reset-actors)
+  (trip)
+  (target-grab)
+  (target-release)
+  (temp-checkpoint-store)
+  (temp-checkpoint-load)
+  (enable-spectator-mode)
+  (disable-spectator-mode)
+  (on-remote-level-update)
+  (enable-debug-mode)
+  (disable-debug-mode)
+  (disable-play-hints)
+)
+
+(deftype remote-player-info (structure)
+ ((username   string)
+  (color      tgt-color)
+  (trans_x    float)
+  (trans_y    float)
+  (trans_z    float)
+  (quat_x     float)
+  (quat_y     float)
+  (quat_z     float)
+  (quat_w     float)
+
+  (zoomer_rot_y   float)
+
+  (inter_type    interaction-type)
+  (inter_amount  float)
+  (inter_status  float)
+  (inter_name    string)
+  (inter_parent  string)
+  (inter_level   string)
+  (inter_cleanup   int32)
+
+  (current_level    symbol)
+  (tgt_state        symbol)
+  (mp_state         mp-tgt-state)
+  (mp_state_check   mp-tgt-state)
+
+  (cells_collected int32)
+  (player_index    int32)
+  (team_id         int32)
+  )
+  :pack-me
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )
+
+(deftype game-mode (structure)
+ (
+  (category               run-category)
+  (mode                   run-mode)
+  (require_same_level     int32)
+  (allow_solo_hub_zoomers int32)
+  (no_lts                 int32)
+  (citadel_skip_version   int32)
+  (free_for_all           int32)
+  (enable_pvp             int32)
+  )
+  :pack-me
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )
+
+(deftype timer-info (structure)
+ ((hours        int32)
+  (minutes      int32)
+  (seconds      int32)
+  (milliseconds int32)
+
+  (split_time     string)
+  (split_name     string)
+  (split_player   string)
+  (split_timesave string)
+  )
+  :pack-me
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )
+
+(deftype notification-info (structure)
+  ((has_notif?   int32)
+   (message     string)
+   (time        int32)
+  )
+  :pack-me
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )
+
+(deftype time-handler (structure)
+ ((active? symbol)
+  (active_time int32)
+  )
+  :pack-me
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )
+
+(deftype spectator-handler (structure)
+ ((is_spectator? symbol)
+  (spectator_idx  int32)
+
+  (has_found_initial_target? symbol)
+
+  (refocus_dist float)
+  (is_refocusing? symbol)
+
+  (next_logic_check int32)
+
+  (last_level_slot_used int32)
+  (next_level_check int32)
+  (in_level_check_wait? symbol)
+  (full_new_level? symbol)
+
+  (next_vis_nick_check int32)
+  (check_vis_nick? symbol)
+
+  (render_animations? symbol)
+  )
+  :pack-me
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )
+
+(deftype load-handler (structure)
+ ((load_slot_0 symbol)
+  (load_slot_1 symbol)
+
+  (force_load_slot_0 symbol)
+  (force_load_slot_1 symbol)
+
+  (load_phase int32)
+  (load_phase_interval_seconds float)
+  (next_load_phase int32)
+  )
+  :pack-me
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )
+
+(deftype multiplayer-info (structure)
+ ((teamrun_command      teamrun-command)
+  (force_continue       string)
+  (client_version       string)
+  (player_num           int32)
+  (players              remote-player-info MAX_MULTIPLAYER_COUNT :inline)
+  (game                 game-mode :inline)
+  (timer                timer-info :inline)
+  (notification         notification-info :inline)
+  )
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )
+
+(deftype game-levels-info (structure)
+ ((has_level_update?    int32)
+
+  (level0_name   string)
+  (level0_status string)
+
+  (level1_name   string)
+  (level1_status string)
+  )
+  :pack-me
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )
+
+(deftype teamrun-player-info (structure)
+ (
+  (has_state_update?  int32)
+  (debug_mode_active? int32)
+  (just_spawned?      int32)
+  (just_loaded?       int32)
+  (just_saved?        int32)
+  (current_continue   string)
+  (cell_count         int32)  ;; missions completed in Jak 2
+  (buzzer_count       int32)  ;; skull gems in Jak 2
+  (money_count        int32)  ;; precursor orbs in Jak 2
+  (death_count        int32)
+  )
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )

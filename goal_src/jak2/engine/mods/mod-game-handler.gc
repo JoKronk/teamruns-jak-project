@@ -1,0 +1,175 @@
+;;-*-Lisp-*-
+(in-package goal)
+
+;; name: mod-game-handler.gc
+;; name in dgo: mod-game-handler
+;; dgos: GAME
+
+;; Multiplayer game handler for Jak 2
+;; Manages remote player state, collision, and team logic
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Remote Player State Checks
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun is-disconnected? ((idx int))
+  (= (-> *multiplayer-info* players idx mp_state) (mp-tgt-state mp-tgt-disconnected))
+  )
+
+(defun is-active? ((idx int))
+  (= (-> *multiplayer-info* players idx mp_state) (mp-tgt-state mp-tgt-active))
+  )
+
+(defun is-interactive? ((idx int))
+  (= (-> *multiplayer-info* players idx mp_state) (mp-tgt-state mp-tgt-interactive))
+  )
+
+(defun is-on-same-team? ((idx int))
+  (and (!= (-> *multiplayer-info* players idx team_id) -1)
+       (= (-> *multiplayer-info* players idx team_id)
+          (-> *self-player-info* team_id)))
+  )
+
+(defun all-teammates-in-same-level? ()
+  (let ((my-level (-> *self-player-info* current_level))
+        (all-same? #t))
+    (dotimes (idx MAX_MULTIPLAYER_COUNT)
+      (when (and (is-interactive? idx)
+                 (is-on-same-team? idx)
+                 (!= idx (-> *multiplayer-info* player_num)))
+        (when (!= (-> *multiplayer-info* players idx current_level) my-level)
+          (set! all-same? #f)
+          )
+        )
+      )
+    all-same?
+    )
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Remote Player Rendering
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun color-target-rgb ((tgt process-drawable) (r float) (g float) (b float))
+  (set! (-> tgt draw color-mult r) r)
+  (set! (-> tgt draw color-mult g) g)
+  (set! (-> tgt draw color-mult b) b)
+  (none)
+  )
+
+(defun apply-player-color ((tgt process-drawable) (color tgt-color))
+  (case color
+    (((tgt-color normal))     (color-target-rgb tgt 1.0 1.0 1.0))
+    (((tgt-color green))      (color-target-rgb tgt 0.0 3.0 0.0))
+    (((tgt-color blue))       (color-target-rgb tgt 0.0 0.0 3.0))
+    (((tgt-color red))        (color-target-rgb tgt 3.0 0.0 0.0))
+    (((tgt-color yellow))     (color-target-rgb tgt 3.0 3.0 0.0))
+    (((tgt-color white))      (color-target-rgb tgt 10.0 10.0 10.0))
+    (((tgt-color black))      (color-target-rgb tgt 0.0 0.0 0.0))
+    (((tgt-color purple))     (color-target-rgb tgt 1.5 0.0 3.0))
+    (((tgt-color pink))       (color-target-rgb tgt 3.0 0.0 3.0))
+    (((tgt-color light-blue)) (color-target-rgb tgt 0.0 3.0 3.0))
+    )
+  (none)
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Remote Target Management
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun get-target ((idx int))
+  (if (= (-> *multiplayer-info* player_num) -1)
+    (if (= idx 0)
+      *target*
+      (the-as target #f)
+      )
+    (if (= (-> *multiplayer-info* player_num) idx)
+      *target*
+      (if (and (-> *remote-targets* idx) (nonzero? (-> *remote-targets* idx)) (handle->process (-> *remote-targets* idx)))
+        (the target (handle->process (-> *remote-targets* idx)))
+        (the-as target #f)
+        )
+      )
+    )
+  )
+
+(defun get-interactive-target ((idx int))
+  (if (= (-> *multiplayer-info* player_num) -1)
+    (if (= idx 0)
+      *target*
+      (the-as target #f)
+      )
+    (if (= (-> *multiplayer-info* player_num) idx)
+      *target*
+      (if (and (-> *remote-targets* idx) (nonzero? (-> *remote-targets* idx)) (is-interactive? idx) (handle->process (-> *remote-targets* idx)))
+        (the target (handle->process (-> *remote-targets* idx)))
+        (the-as target #f)
+        )
+      )
+    )
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Interaction Data Cleanup
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun clean-up-interaction-data ((target remote-player-info))
+  (set! (-> target inter_type) (interaction-type none))
+  (set! (-> target inter_amount) 0.0)
+  (set! (-> target inter_status) 0.0)
+  (set! (-> target inter_name) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+  (set! (-> target inter_parent) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+  (set! (-> target inter_level) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+  (set! (-> target inter_cleanup) 0)
+  (none)
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Command Execution
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-extern pc-clear-mp-command (function none))
+(define-extern pc-connect-mp-info (function multiplayer-info remote-player-info teamrun-player-info game-levels-info none))
+(define-extern pc-update-position (function none))
+
+(defun execute-teamrun-command ()
+  (let ((cmd (-> *multiplayer-info* teamrun_command)))
+    (when (!= cmd (teamrun-command none))
+      (case cmd
+        (((teamrun-command mark-connected))
+          (format 0 "Multiplayer: connected~%")
+          (set! *self-setup-completed* #t)
+          )
+        (((teamrun-command setup-run))
+          (format 0 "Multiplayer: setup run~%")
+          )
+        (((teamrun-command start-run))
+          (format 0 "Multiplayer: start run~%")
+          )
+        (((teamrun-command reset-game))
+          (format 0 "Multiplayer: reset game~%")
+          )
+        (((teamrun-command reset-actors))
+          (format 0 "Multiplayer: reset actors~%")
+          )
+        (((teamrun-command target-grab))
+          (format 0 "Multiplayer: target grab~%")
+          )
+        (((teamrun-command target-release))
+          (format 0 "Multiplayer: target release~%")
+          )
+        (((teamrun-command enable-spectator-mode))
+          (format 0 "Multiplayer: spectator on~%")
+          )
+        (((teamrun-command disable-spectator-mode))
+          (format 0 "Multiplayer: spectator off~%")
+          )
+        (((teamrun-command on-remote-level-update))
+          ;; handle remote level changes
+          )
+        )
+      (pc-clear-mp-command)
+      )
+    )
+  (none)
+  )
