@@ -293,6 +293,7 @@ void extract_common(const ObjectFileDB& db,
 
   // copy in any art groups that were requested to be common
   if (config.common_art_groups.size() > 0) {
+    MercSwapInfo common_swapped_info;
     std::unordered_set<std::string> art_groups_made_common;
     for (const std::string& lvl_dgo_name : all_dgo_names) {
       // exit early if we've found everything
@@ -310,7 +311,8 @@ void extract_common(const ObjectFileDB& db,
             lg::info("Art group {} was requested to be made common, we found it in {}!", file.name,
                      lvl_dgo_name);
             const auto& ag_file = db.lookup_record(file);
-            extract_merc(ag_file, tex_db, db.dts, tex_remap, tfrag_level, false, db.version());
+            extract_merc(ag_file, tex_db, db.dts, tex_remap, tfrag_level, false, db.version(),
+                         common_swapped_info);
             extract_joint_group(ag_file, db.dts, db.version(), art_group_data);
             // track found art groups so we don't borther re-processing in a later level
             art_groups_made_common.insert(file.name);
