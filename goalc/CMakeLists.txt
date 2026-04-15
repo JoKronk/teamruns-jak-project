@@ -4,6 +4,9 @@ add_library(compiler
         emitter/ObjectFileData.cpp
         emitter/ObjectGenerator.cpp
         emitter/Register.cpp
+        emitter/IGen.cpp
+        emitter/IGenARM64.cpp
+        emitter/IGenX86.cpp
         debugger/disassemble.cpp
         build_level/common/build_level.cpp
         build_actor/common/animation_processing.cpp
@@ -60,10 +63,14 @@ add_library(compiler
         data_compiler/dir_tpages.cpp
         data_compiler/game_count.cpp
         data_compiler/DataObjectGenerator.cpp
-        data_compiler/taunt.cpp
+        build_actor/common/build_actor.cpp
         build_actor/jak1/build_actor.cpp
+        build_actor/jak2/build_actor.cpp
+        build_actor/jak3/build_actor.cpp
         debugger/Debugger.cpp
         debugger/DebugInfo.cpp
+        emitter/IGenX86.cpp
+        emitter/IGenARM64.cpp
         listener/Listener.cpp
         listener/MemoryMap.cpp
         make/MakeSystem.cpp

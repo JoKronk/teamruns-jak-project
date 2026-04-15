@@ -5,6 +5,8 @@
 ;; name in dgo: game-save
 ;; dgos: ENGINE, GAME
 
+(define-extern mark-speedrun-started (function none))
+
 ;; NOTE - for default-menu
 (declare-type auto-save process)
 (define-extern auto-save-command (function symbol int int process-tree symbol (pointer auto-save)))
@@ -1164,7 +1166,7 @@
                (the int (-> (the-as (inline-array game-save-tag) v1-0) 0 user-float0))
                )
          )
-        (else (format 0 "PC PORT: Skipping setting from game save, its stored in the pc-settings now"))
+        (else (format 0 "PC PORT: Skipping setting from game save, its stored in the pc-settings now~%"))
         )
       (set! v1-0 (&+
                    (the-as pointer v1-0)
@@ -1178,6 +1180,9 @@
             )
       )
     )
+  ;; og:preserve-this make sure loading a save doesn't reset speedrun state
+  (when (and (-> *pc-settings* speedrunner-mode?) (zero? (-> arg0 new-game)))
+    (mark-speedrun-started))
   (when (nonzero? (-> arg0 new-game))
     (case (-> arg0 new-game)
       ((2)
@@ -1758,7 +1763,7 @@ auto-save-post
   (set! (-> self icon scale-y) 2.0)
   (set! (-> self icon angle) 0.0)
   (set! (-> self icon flags) (the-as uint 0))
-  (set! (-> self icon tex) (lookup-texture-by-id (new 'static 'texture-id :index #x48 :page #x67a)))
+  (set! (-> self icon tex) (get-texture checkpoint level-default-minimap))
   (go-virtual get-heap)
   )
 

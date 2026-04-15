@@ -47,7 +47,7 @@
          (set! (-> arg0 slope-down-factor) (-> arg1 slope-down-factor))
          (set! (-> arg0 seek0)
                (lerp-scale
-                 (* 0.1 (-> arg0 seek0))
+                 (/ (-> arg0 seek0) 10)
                  (-> arg0 seek0)
                  (the float (- (current-time) (-> self board spin-time)))
                  0.0
@@ -56,7 +56,7 @@
                )
          (set! (-> arg0 seek90)
                (lerp-scale
-                 (* 0.1 (-> arg0 seek90))
+                 (/ (-> arg0 seek90) 10)
                  (-> arg0 seek90)
                  (the float (- (current-time) (-> self board spin-time)))
                  0.0
@@ -72,8 +72,8 @@
          (when (not (time-elapsed? (-> self board spin-ground-start-time) (seconds 0.3)))
            (set-time! (-> self control last-attack-end-time))
            (set-time! (-> self board spin-ground-time))
-           (set! (-> arg0 seek0) (* 0.1 (-> arg0 seek0)))
-           (set! (-> arg0 seek90) (* 0.1 (-> arg0 seek90)))
+           (set! (-> arg0 seek0) (/ (-> arg0 seek0) 10))
+           (set! (-> arg0 seek90) (/ (-> arg0 seek90) 10))
            (set! (-> arg0 vel-turn) 131072.0)
            (set! (-> arg0 turnv) 91022.22)
            )
@@ -505,15 +505,11 @@
                (s5-1 (new 'stack-no-clear 'vector))
                )
            (vector-normalize!
-             (vector-!
-               (-> self control edge-grab-edge-dir)
-               (-> gp-1 world-vertex 1)
-               (the-as vector (-> gp-1 world-vertex))
-               )
+             (vector-! (-> self control edge-grab-edge-dir) (-> gp-1 world-vertex 1) (-> gp-1 world-vertex 0))
              1.0
              )
            (vector+float*! s5-1 (-> self control trans) (-> self control c-R-w vector 2) (* 40960.0 (seconds-per-frame)))
-           (let ((f0-2 (vector-segment-overlap s5-1 (the-as vector (-> gp-1 world-vertex)) (-> gp-1 world-vertex 1))))
+           (let ((f0-2 (vector-segment-overlap s5-1 (-> gp-1 world-vertex 0) (-> gp-1 world-vertex 1))))
              (if (and (time-elapsed? (-> self board ride-time) (seconds 0.4))
                       (>= f0-2 0.0)
                       (>= 1.0 f0-2)
@@ -540,7 +536,7 @@
                     (the-as int (-> self control attack-count))
                     (-> self control penetrate-using)
                     )
-              (process-spawn part-tracker :init part-tracker-init (-> *part-group-id-table* 117) 0 #f #f self 25 :to self)
+              (process-spawn part-tracker :init part-tracker-init group-board-spin-attack 0 #f #f self 25 :to self)
               (target-timed-invulnerable (seconds 0.5) self 2)
               )
             )
@@ -649,7 +645,7 @@
       (set! (-> self board upper-body) (new 'process 'joint-mod (joint-mod-mode flex-blend) self 5))
       )
   (if (zero? (-> self board part-control))
-      (set! (-> self board part-control) (create-launch-control (-> *part-group-id-table* 118) self))
+      (set! (-> self board part-control) (create-launch-control group-target-board self))
       )
   (mode-set! (-> self board main) (joint-mod-mode flex-blend))
   (mode-set! (-> self board upper-body) (joint-mod-mode flex-blend))
@@ -1258,36 +1254,7 @@
        )
      (set! (-> self board shock-offset) -3072.0)
      (set! (-> self board shock-offsetv) 0.0)
-     (let ((gp-3 (get-process *default-dead-pool* part-tracker #x4000)))
-       (when gp-3
-         (let ((t9-9 (method-of-type part-tracker activate)))
-           (t9-9 (the-as part-tracker gp-3) self (symbol->string (-> part-tracker symbol)) (the-as pointer #x70004000))
-           )
-         (let ((t9-10 run-function-in-process)
-               (a0-28 gp-3)
-               (a1-8 part-tracker-init)
-               (a2-8 (-> *part-group-id-table* 21))
-               (a3-5 0)
-               (t0-4 #f)
-               (t1-2 #f)
-               (t2-2 #f)
-               (t3-0 *launch-matrix*)
-               )
-           (set! (-> t3-0 trans quad) (-> self control trans quad))
-           ((the-as (function object object object object object object object object none) t9-10)
-            a0-28
-            a1-8
-            a2-8
-            a3-5
-            t0-4
-            t1-2
-            t2-2
-            t3-0
-            )
-           )
-         (-> gp-3 ppointer)
-         )
-       )
+     (part-tracker-spawn :to self :group group-land-poof-stn :mat-joint (-> self control trans))
      )
     )
   (set! (-> self control draw-offset y)
@@ -1678,7 +1645,7 @@
                    (< 0.98 (vector-dot (-> self board unknown-vector01) (-> self control standard-dynamics gravity-normal)))
                    (< f26-0 8192.0)
                    (< f30-0 8192.0)
-                   (or (< (* 0.2 f28-0) f30-0) (not (time-elapsed? (-> self board unknown-time-frame00) (seconds 0.1))))
+                   (or (< (/ f28-0 5) f30-0) (not (time-elapsed? (-> self board unknown-time-frame00) (seconds 0.1))))
                    )
           (vector+float*!
             (-> self control transv)
@@ -1999,7 +1966,7 @@
         (set! (-> s2-0 start-pos quad) (-> v1-2 prim-core world-sphere quad))
         (set! (-> s2-0 move-dist quad) (-> arg1 quad))
         (let ((a0-3 s2-0))
-          (set! (-> a0-3 radius) (* 0.5 (-> v1-2 prim-core world-sphere w)))
+          (set! (-> a0-3 radius) (/ (-> v1-2 prim-core world-sphere w) 2))
           (set! (-> a0-3 collide-with) (-> v1-2 prim-core collide-with))
           (set! (-> a0-3 ignore-process0) (-> arg0 process))
           (set! (-> a0-3 ignore-process1) #f)
@@ -2058,11 +2025,7 @@
         )
       (set! (-> self control ground-pat) (the-as pat-surface (-> s4-0 edge-tri-pat)))
       (vector-normalize!
-        (vector-!
-          (-> self control edge-grab-edge-dir)
-          (-> s4-0 world-vertex 1)
-          (the-as vector (-> s4-0 world-vertex))
-          )
+        (vector-! (-> self control edge-grab-edge-dir) (-> s4-0 world-vertex 1) (-> s4-0 world-vertex 0))
         1.0
         )
       (set! (-> self control edge-grab-across-edge-dir quad) (-> s4-0 hanging-matrix quad 0))
@@ -2072,11 +2035,7 @@
           (set! (-> s4-0 world-vertex 0 quad) (-> s4-0 world-vertex 1 quad))
           (set! (-> s4-0 world-vertex 1 quad) (-> s3-2 quad))
           (vector-normalize!
-            (vector-!
-              (-> self control edge-grab-edge-dir)
-              (-> s4-0 world-vertex 1)
-              (the-as vector (-> s4-0 world-vertex))
-              )
+            (vector-! (-> self control edge-grab-edge-dir) (-> s4-0 world-vertex 1) (-> s4-0 world-vertex 0))
             1.0
             )
           (set! (-> s3-2 quad) (-> s4-0 adjacent-edge-left-vertex quad))
@@ -2288,10 +2247,10 @@
               )
             )
           (let ((s3-9 (-> self board ride-vertex (-> self board ride-vertex-base))))
-            (if (not (or (vector= s3-9 (the-as vector (-> self board ride-vertex-old)))
+            (if (not (or (vector= s3-9 (-> self board ride-vertex-old 0))
                          (vector= s3-9 (-> self board ride-vertex-old 1))
                          (vector= s3-9 (-> self board ride-vertex-old 2))
-                         (vector= (&+ s3-9 16) (the-as vector (-> self board ride-vertex-old)))
+                         (vector= (&+ s3-9 16) (-> self board ride-vertex-old 0))
                          (vector= (&+ s3-9 16) (-> self board ride-vertex-old 1))
                          (vector= (&+ s3-9 16) (-> self board ride-vertex-old 2))
                          )
@@ -2404,7 +2363,7 @@
   (let* ((f30-0 (-> self board ride-speed))
          (f0-4 (lerp-scale
                  (-> self control current-surface fric)
-                 (* 0.2 (-> self control current-surface fric))
+                 (/ (-> self control current-surface fric) 5)
                  f30-0
                  0.0
                  (-> self control current-surface transv-max)

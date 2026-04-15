@@ -596,8 +596,8 @@
   (let* ((a0-1 (-> arg4 control))
          (v1-1 (vector-! (new 'stack-no-clear 'vector) (-> arg2 x-y-z-sx) (-> a0-1 origin trans)))
          )
-    (set! (-> arg1 vel-sxvel x) (* 0.083333336 (-> v1-1 x)))
-    (set! (-> arg1 vel-sxvel y) (* 0.083333336 (-> v1-1 y)))
+    (set! (-> arg1 vel-sxvel x) (/ (-> v1-1 x) 12))
+    (set! (-> arg1 vel-sxvel y) (/ (-> v1-1 y) 12))
     )
   0
   (none)
@@ -938,9 +938,9 @@
   (let* ((a0-1 (-> arg4 control))
          (v1-1 (vector-! (new 'stack-no-clear 'vector) (-> arg2 x-y-z-sx) (-> a0-1 origin trans)))
          )
-    (set! (-> arg1 vel-sxvel x) (* -0.008333334 (-> v1-1 x)))
-    (set! (-> arg1 vel-sxvel y) (* -0.008333334 (-> v1-1 y)))
-    (set! (-> arg1 vel-sxvel z) (* -0.008333334 (-> v1-1 z)))
+    (set! (-> arg1 vel-sxvel x) (/ (-> v1-1 x) -120))
+    (set! (-> arg1 vel-sxvel y) (/ (-> v1-1 y) -120))
+    (set! (-> arg1 vel-sxvel z) (/ (-> v1-1 z) -120))
     )
   0
   (none)
@@ -1706,23 +1706,23 @@
       (cond
         ((logtest? (-> (cond
                          ((zero? v1-0)
-                          (-> *part-group-id-table* 510)
+                          group-pre-bubble-birth-triangle
                           )
                          ((= v1-0 1)
-                          (-> *part-group-id-table* 511)
+                          group-pre-bubble-birth-circle
                           )
                          ((= v1-0 2)
-                          (-> *part-group-id-table* 513)
+                          group-pre-bubble-birth-x
                           )
                          (else
-                           (-> *part-group-id-table* 512)
+                           group-pre-bubble-birth-square
                            )
                          )
                        flags
                        )
                    (sp-group-flag sp13)
                    )
-         (set! (-> *launch-matrix* trans quad) (-> self root trans quad))
+         (vector-copy! (-> *launch-matrix* trans) (-> self root trans))
          (let ((gp-0 (get-process *default-dead-pool* part-tracker-subsampler #x4000 0)))
            (when gp-0
              (let ((t9-1 (method-of-type part-tracker-subsampler activate)))
@@ -1740,16 +1740,16 @@
                (let ((v1-13 (-> self bubble-type)))
                  (set! (-> *part-tracker-subsampler-params-default* group) (cond
                                                                              ((zero? v1-13)
-                                                                              (-> *part-group-id-table* 510)
+                                                                              group-pre-bubble-birth-triangle
                                                                               )
                                                                              ((= v1-13 1)
-                                                                              (-> *part-group-id-table* 511)
+                                                                              group-pre-bubble-birth-circle
                                                                               )
                                                                              ((= v1-13 2)
-                                                                              (-> *part-group-id-table* 513)
+                                                                              group-pre-bubble-birth-x
                                                                               )
                                                                              (else
-                                                                               (-> *part-group-id-table* 512)
+                                                                               group-pre-bubble-birth-square
                                                                                )
                                                                              )
                        )
@@ -1767,7 +1767,7 @@
            )
          )
         (else
-          (set! (-> *launch-matrix* trans quad) (-> self root trans quad))
+          (vector-copy! (-> *launch-matrix* trans) (-> self root trans))
           (let ((gp-1 (get-process *default-dead-pool* part-tracker #x4000 0)))
             (when gp-1
               (let ((t9-4 (method-of-type part-tracker activate)))
@@ -1780,16 +1780,16 @@
                 (let ((v1-32 (-> self bubble-type)))
                   (set! (-> *part-tracker-params-default* group) (cond
                                                                    ((zero? v1-32)
-                                                                    (-> *part-group-id-table* 510)
+                                                                    group-pre-bubble-birth-triangle
                                                                     )
                                                                    ((= v1-32 1)
-                                                                    (-> *part-group-id-table* 511)
+                                                                    group-pre-bubble-birth-circle
                                                                     )
                                                                    ((= v1-32 2)
-                                                                    (-> *part-group-id-table* 513)
+                                                                    group-pre-bubble-birth-x
                                                                     )
                                                                    (else
-                                                                     (-> *part-group-id-table* 512)
+                                                                     group-pre-bubble-birth-square
                                                                      )
                                                                    )
                         )
@@ -1807,7 +1807,8 @@
           )
         )
       )
-    (suspend-for (-> self start-delay))
+    (suspend-for (-> self start-delay)
+      )
     (go-virtual fall)
     )
   :post (behavior ()
@@ -1850,23 +1851,23 @@
            (cond
              ((logtest? (-> (cond
                               ((zero? v1-21)
-                               (-> *part-group-id-table* 506)
+                               group-pre-bubble-pop-triangle
                                )
                               ((= v1-21 1)
-                               (-> *part-group-id-table* 507)
+                               group-pre-bubble-pop-circle
                                )
                               ((= v1-21 2)
-                               (-> *part-group-id-table* 509)
+                               group-pre-bubble-pop-x
                                )
                               (else
-                                (-> *part-group-id-table* 508)
+                                group-pre-bubble-pop-square
                                 )
                               )
                             flags
                             )
                         (sp-group-flag sp13)
                         )
-              (set! (-> *launch-matrix* trans quad) (-> self root trans quad))
+              (vector-copy! (-> *launch-matrix* trans) (-> self root trans))
               (let ((gp-4 (get-process *default-dead-pool* part-tracker-subsampler #x4000 0)))
                 (when gp-4
                   (let ((t9-10 (method-of-type part-tracker-subsampler activate)))
@@ -1884,16 +1885,16 @@
                     (let ((v1-34 (-> self bubble-type)))
                       (set! (-> *part-tracker-subsampler-params-default* group) (cond
                                                                                   ((zero? v1-34)
-                                                                                   (-> *part-group-id-table* 506)
+                                                                                   group-pre-bubble-pop-triangle
                                                                                    )
                                                                                   ((= v1-34 1)
-                                                                                   (-> *part-group-id-table* 507)
+                                                                                   group-pre-bubble-pop-circle
                                                                                    )
                                                                                   ((= v1-34 2)
-                                                                                   (-> *part-group-id-table* 509)
+                                                                                   group-pre-bubble-pop-x
                                                                                    )
                                                                                   (else
-                                                                                    (-> *part-group-id-table* 508)
+                                                                                    group-pre-bubble-pop-square
                                                                                     )
                                                                                   )
                             )
@@ -1911,7 +1912,7 @@
                 )
               )
              (else
-               (set! (-> *launch-matrix* trans quad) (-> self root trans quad))
+               (vector-copy! (-> *launch-matrix* trans) (-> self root trans))
                (let ((gp-5 (get-process *default-dead-pool* part-tracker #x4000 0)))
                  (when gp-5
                    (let ((t9-13 (method-of-type part-tracker activate)))
@@ -1924,16 +1925,16 @@
                      (let ((v1-53 (-> self bubble-type)))
                        (set! (-> *part-tracker-params-default* group) (cond
                                                                         ((zero? v1-53)
-                                                                         (-> *part-group-id-table* 506)
+                                                                         group-pre-bubble-pop-triangle
                                                                          )
                                                                         ((= v1-53 1)
-                                                                         (-> *part-group-id-table* 507)
+                                                                         group-pre-bubble-pop-circle
                                                                          )
                                                                         ((= v1-53 2)
-                                                                         (-> *part-group-id-table* 509)
+                                                                         group-pre-bubble-pop-x
                                                                          )
                                                                         (else
-                                                                          (-> *part-group-id-table* 508)
+                                                                          group-pre-bubble-pop-square
                                                                           )
                                                                         )
                              )
@@ -1969,23 +1970,23 @@
       (cond
         ((logtest? (-> (cond
                          ((zero? v1-8)
-                          (-> *part-group-id-table* 514)
+                          group-pre-bubble-land-triangle
                           )
                          ((= v1-8 1)
-                          (-> *part-group-id-table* 515)
+                          group-pre-bubble-land-circle
                           )
                          ((= v1-8 2)
-                          (-> *part-group-id-table* 517)
+                          group-pre-bubble-land-x
                           )
                          (else
-                           (-> *part-group-id-table* 516)
+                           group-pre-bubble-land-square
                            )
                          )
                        flags
                        )
                    (sp-group-flag sp13)
                    )
-         (set! (-> *launch-matrix* trans quad) (-> self root trans quad))
+         (vector-copy! (-> *launch-matrix* trans) (-> self root trans))
          (let ((gp-0 (get-process *default-dead-pool* part-tracker-subsampler #x4000 0)))
            (when gp-0
              (let ((t9-1 (method-of-type part-tracker-subsampler activate)))
@@ -2003,16 +2004,16 @@
                (let ((v1-21 (-> self bubble-type)))
                  (set! (-> *part-tracker-subsampler-params-default* group) (cond
                                                                              ((zero? v1-21)
-                                                                              (-> *part-group-id-table* 514)
+                                                                              group-pre-bubble-land-triangle
                                                                               )
                                                                              ((= v1-21 1)
-                                                                              (-> *part-group-id-table* 515)
+                                                                              group-pre-bubble-land-circle
                                                                               )
                                                                              ((= v1-21 2)
-                                                                              (-> *part-group-id-table* 517)
+                                                                              group-pre-bubble-land-x
                                                                               )
                                                                              (else
-                                                                               (-> *part-group-id-table* 516)
+                                                                               group-pre-bubble-land-square
                                                                                )
                                                                              )
                        )
@@ -2030,7 +2031,7 @@
            )
          )
         (else
-          (set! (-> *launch-matrix* trans quad) (-> self root trans quad))
+          (vector-copy! (-> *launch-matrix* trans) (-> self root trans))
           (let ((gp-1 (get-process *default-dead-pool* part-tracker #x4000 0)))
             (when gp-1
               (let ((t9-4 (method-of-type part-tracker activate)))
@@ -2043,16 +2044,16 @@
                 (let ((v1-40 (-> self bubble-type)))
                   (set! (-> *part-tracker-params-default* group) (cond
                                                                    ((zero? v1-40)
-                                                                    (-> *part-group-id-table* 514)
+                                                                    group-pre-bubble-land-triangle
                                                                     )
                                                                    ((= v1-40 1)
-                                                                    (-> *part-group-id-table* 515)
+                                                                    group-pre-bubble-land-circle
                                                                     )
                                                                    ((= v1-40 2)
-                                                                    (-> *part-group-id-table* 517)
+                                                                    group-pre-bubble-land-x
                                                                     )
                                                                    (else
-                                                                     (-> *part-group-id-table* 516)
+                                                                     group-pre-bubble-land-square
                                                                      )
                                                                    )
                         )
@@ -2073,7 +2074,8 @@
     (sound-play "lose-icon")
     (send-event (ppointer->process (-> self parent)) 'done)
     (set! (-> self post-hook) #f)
-    (suspend-for (seconds 0.2))
+    (suspend-for (seconds 0.2)
+      )
     )
   :post (behavior ()
     (vector-normalize!
@@ -2092,7 +2094,7 @@
   (set! (-> self start-delay) arg3)
   (set! (-> self gravity) arg4)
   (set! (-> self root) (new 'process 'trsqv))
-  (set! (-> self screen-pos quad) (-> arg1 quad))
+  (vector-copy! (-> self screen-pos) arg1)
   (logclear! (-> self mask) (process-mask actor-pause))
   (initialize-skeleton
     self
@@ -2107,19 +2109,19 @@
                          (cond
                            ((zero? arg2)
                             (setup-masks (-> self draw) 0 11)
-                            (-> *part-group-id-table* 502)
+                            group-pre-bubble-triangle
                             )
                            ((= arg2 1)
                             (setup-masks (-> self draw) 0 14)
-                            (-> *part-group-id-table* 503)
+                            group-pre-bubble-circle
                             )
                            ((= arg2 2)
                             (setup-masks (-> self draw) 0 7)
-                            (-> *part-group-id-table* 505)
+                            group-pre-bubble-x
                             )
                            (else
                              (setup-masks (-> self draw) 0 13)
-                             (-> *part-group-id-table* 504)
+                             group-pre-bubble-square
                              )
                            )
                          self
@@ -2175,12 +2177,7 @@
               (s3-1 0)
               )
           (while s2-1
-            (let* ((s0-0 (ppointer->process s2-1))
-                   (s1-0 (if (type? s0-0 pre-game-bubble)
-                             (the-as pre-game-bubble s0-0)
-                             )
-                         )
-                   )
+            (let ((s1-0 (as-type (ppointer->process s2-1) pre-game-bubble)))
               (when (and s1-0 (type? s1-0 pre-game-bubble) (= (-> s1-0 bubble-type) (-> s4-0 index)))
                 (let ((f0-1 (* 0.01 (vector-length (-> s1-0 screen-pos)))))
                   (when (and (not (time-elapsed? (-> s4-0 fire-time) (seconds 0.02)))
@@ -2281,7 +2278,8 @@
               )
             (set! s3-0 (logior s3-0 (ash 1 s1-0)))
             (let ((v1-50 (cond
-                           ((logtest? (-> *game-info* secrets) (game-secrets hflip-screen))
+                           ;; og:preserve-this mirror mode
+                           ((or (logtest? (-> *game-info* secrets) (game-secrets hflip-screen)) *PC-MIRROR-MODE-SET*)
                             (case s1-0
                               ((1)
                                3
@@ -2371,7 +2369,8 @@
       ((not (task-node-closed? (game-task-node wascity-pre-game-bronze)))
        (when (>= f30-0 (game-info-method-31 *game-info* 1 1))
          (sound-play-by-spec (static-sound-spec "skill-pickup" :group 0 :fo-curve 1) (new-sound-id) (the-as vector #t))
-         (script-eval '(birth-pickup ("power-game-2" "screen") skill FACT_SUPER_SKILL_INC flags (suck-in)))
+         ;; og:preserve-this changed string from "power-game-2"
+         (script-eval '(birth-pickup ("was-pre-game-2" "screen") skill FACT_SUPER_SKILL_INC flags (suck-in)))
          (task-node-close! (game-task-node wascity-pre-game-bronze) 'event)
          (set! (-> *game-info* goal) (game-info-method-31 *game-info* 1 2))
          (let ((v1-39 (the-as hud (handle->process (-> this hud-goal)))))
@@ -2390,7 +2389,8 @@
       ((not (task-node-closed? (game-task-node wascity-pre-game-silver)))
        (when (>= f30-0 (game-info-method-31 *game-info* 1 2))
          (sound-play-by-spec (static-sound-spec "skill-pickup" :group 0 :fo-curve 1) (new-sound-id) (the-as vector #t))
-         (script-eval '(birth-pickup ("power-game-2" "screen") skill FACT_SUPER_SKILL_INC flags (suck-in)))
+         ;; og:preserve-this changed string from "power-game-2"
+         (script-eval '(birth-pickup ("was-pre-game-2" "screen") skill FACT_SUPER_SKILL_INC flags (suck-in)))
          (task-node-close! (game-task-node wascity-pre-game-silver) 'event)
          (set! (-> *game-info* goal) (game-info-method-31 *game-info* 1 3))
          (let ((v1-53 (the-as hud (handle->process (-> this hud-goal)))))
@@ -2409,7 +2409,8 @@
       ((not (task-node-closed? (game-task-node wascity-pre-game-gold)))
        (when (>= f30-0 (game-info-method-31 *game-info* 1 3))
          (sound-play-by-spec (static-sound-spec "skill-pickup" :group 0 :fo-curve 1) (new-sound-id) (the-as vector #t))
-         (script-eval '(birth-pickup ("power-game-2" "screen") skill FACT_SUPER_SKILL_INC flags (suck-in)))
+         ;; og:preserve-this changed string from "power-game-2"
+         (script-eval '(birth-pickup ("was-pre-game-2" "screen") skill FACT_SUPER_SKILL_INC flags (suck-in)))
          (task-node-close! (game-task-node wascity-pre-game-gold) 'event)
          (send-event (handle->process (-> this hud-goal)) 'hide-and-die)
          )
@@ -2518,12 +2519,8 @@
                    (new 'stack 'font-context *font-default-matrix* 32 320 0.0 (font-color default) (font-flags shadow kerning))
                    )
                  )
-             (let ((v1-29 gp-1))
-               (set! (-> v1-29 width) (the float 340))
-               )
-             (let ((v1-30 gp-1))
-               (set! (-> v1-30 height) (the float 80))
-               )
+             (set-width! gp-1 340)
+             (set-height! gp-1 80)
              (let ((v1-31 gp-1)
                    (a0-21 (-> *setting-control* user-default language))
                    )
@@ -2867,6 +2864,7 @@
   )
 
 (defmethod init-from-entity! ((this was-pre-game) (arg0 entity-actor))
+  "Set up a newly created process from the entity that created it."
   (let ((s4-0 (new 'process 'collide-shape-moving this (collide-list-enum usually-hit-by-player))))
     (set! (-> s4-0 dynam) (copy *standard-dynamics* 'process))
     (set! (-> s4-0 reaction) cshape-reaction-default)
@@ -3016,7 +3014,8 @@
           (v1-6 (new 'stack-no-clear 'vector))
           )
       (let ((a0-7 (cond
-                    ((logtest? (-> *game-info* secrets) (game-secrets hflip-screen))
+                    ;; og:preserve-this mirror mode
+                    ((or (logtest? (-> *game-info* secrets) (game-secrets hflip-screen)) *PC-MIRROR-MODE-SET*)
                      (case (-> self index)
                        ((1)
                         3
@@ -3037,19 +3036,19 @@
             )
         (cond
           ((zero? a0-7)
-           (set-vector! v1-6 0.0 (* 90.0 (+ (-> a1-1 min) (* 0.5 (-> a1-1 size)))) 0.0 1.0)
+           (set-vector! v1-6 0.0 (* 90.0 (+ (-> a1-1 min) (/ (-> a1-1 size) 2))) 0.0 1.0)
            )
           ((= a0-7 1)
-           (set-vector! v1-6 (* 90.0 (+ (-> a1-1 min) (* 0.5 (-> a1-1 size)))) 0.0 0.0 1.0)
+           (set-vector! v1-6 (* 90.0 (+ (-> a1-1 min) (/ (-> a1-1 size) 2))) 0.0 0.0 1.0)
            )
           ((= a0-7 2)
-           (set-vector! v1-6 0.0 (* -90.0 (+ (-> a1-1 min) (* 0.5 (-> a1-1 size)))) 0.0 1.0)
+           (set-vector! v1-6 0.0 (* -90.0 (+ (-> a1-1 min) (/ (-> a1-1 size) 2))) 0.0 1.0)
            )
           ((= a0-7 2)
-           (set-vector! v1-6 0.0 (* 90.0 (+ (-> a1-1 min) (* 0.5 (-> a1-1 size)))) 0.0 1.0)
+           (set-vector! v1-6 0.0 (* 90.0 (+ (-> a1-1 min) (/ (-> a1-1 size) 2))) 0.0 1.0)
            )
           ((= a0-7 3)
-           (set-vector! v1-6 (* -90.0 (+ (-> a1-1 min) (* 0.5 (-> a1-1 size)))) 0.0 0.0 1.0)
+           (set-vector! v1-6 (* -90.0 (+ (-> a1-1 min) (/ (-> a1-1 size) 2))) 0.0 0.0 1.0)
            )
           )
         )
@@ -3078,7 +3077,8 @@
           (v1-6 (new 'stack-no-clear 'vector))
           )
       (let ((a0-7 (cond
-                    ((logtest? (-> *game-info* secrets) (game-secrets hflip-screen))
+                    ;; og:preserve-this mirror mode
+                    ((or (logtest? (-> *game-info* secrets) (game-secrets hflip-screen)) *PC-MIRROR-MODE-SET*)
                      (case (-> self index)
                        ((1)
                         3
@@ -3099,16 +3099,16 @@
             )
         (cond
           ((zero? a0-7)
-           (set-vector! v1-6 0.0 (* 90.0 (+ (-> a1-1 min) (* 0.5 (-> a1-1 size)))) 0.0 1.0)
+           (set-vector! v1-6 0.0 (* 90.0 (+ (-> a1-1 min) (/ (-> a1-1 size) 2))) 0.0 1.0)
            )
           ((= a0-7 1)
-           (set-vector! v1-6 (* 90.0 (+ (-> a1-1 min) (* 0.5 (-> a1-1 size)))) 0.0 0.0 1.0)
+           (set-vector! v1-6 (* 90.0 (+ (-> a1-1 min) (/ (-> a1-1 size) 2))) 0.0 0.0 1.0)
            )
           ((= a0-7 2)
-           (set-vector! v1-6 0.0 (* -90.0 (+ (-> a1-1 min) (* 0.5 (-> a1-1 size)))) 0.0 1.0)
+           (set-vector! v1-6 0.0 (* -90.0 (+ (-> a1-1 min) (/ (-> a1-1 size) 2))) 0.0 1.0)
            )
           ((= a0-7 3)
-           (set-vector! v1-6 (* -90.0 (+ (-> a1-1 min) (* 0.5 (-> a1-1 size)))) 0.0 0.0 1.0)
+           (set-vector! v1-6 (* -90.0 (+ (-> a1-1 min) (/ (-> a1-1 size) 2))) 0.0 0.0 1.0)
            )
           )
         )

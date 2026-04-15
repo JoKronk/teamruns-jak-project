@@ -10,6 +10,7 @@
   },
   "cmake.configureOnOpen": false,
   "files.associations": {
-    "optional": "cpp"
+    "xhash": "cpp",
+    "vector": "cpp"
   }
 }

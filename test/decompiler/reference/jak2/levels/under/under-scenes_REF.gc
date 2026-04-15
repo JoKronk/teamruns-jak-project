@@ -73,7 +73,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2272
-  :init-specs ((:texture (new 'static 'texture-id :index #x34 :page #xc))
+  :init-specs ((:texture (explosion-wave effects))
     (:num 40.0 25.0)
     (:y (meters 4))
     (:scale-x (meters 3) (meters 3))
@@ -149,7 +149,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2270
-  :init-specs ((:texture (new 'static 'texture-id :index #x32 :page #xc))
+  :init-specs ((:texture (specs effects))
     (:num 30.0 40.0)
     (:x (meters 0.25))
     (:y (meters 4))
@@ -193,7 +193,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2269
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 40.0)
     (:x (meters 0) (meters 0.6))
     (:y (meters 4))
@@ -244,7 +244,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2279
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 1.0)
     (:x (meters -0.25) (meters 1))
     (:scale-x (meters 1) (meters 2))
@@ -282,7 +282,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2283
-  :init-specs ((:texture (new 'static 'texture-id :index #x34 :page #xc))
+  :init-specs ((:texture (explosion-wave effects))
     (:num 8.0 6.0)
     (:y (meters 4))
     (:scale-x (meters 3) (meters 3))
@@ -358,7 +358,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2281
-  :init-specs ((:texture (new 'static 'texture-id :index #x32 :page #xc))
+  :init-specs ((:texture (specs effects))
     (:num 16.0 4.0)
     (:x (meters 0.25))
     (:y (meters 4))
@@ -402,7 +402,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2280
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 16.0)
     (:x (meters 0) (meters 0.6))
     (:y (meters 4))
@@ -453,7 +453,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2290
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 1.0)
     (:x (meters -0.25) (meters 1))
     (:scale-x (meters 1) (meters 2))
@@ -519,7 +519,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2291
-  :init-specs ((:texture (new 'static 'texture-id :index #x46 :page #xc))
+  :init-specs ((:texture (gun-yellow-muzzleflash effects))
     (:birth-func 'birth-func-set-quat)
     (:num 1.0)
     (:scale-x (meters 1))
@@ -536,7 +536,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2292
-  :init-specs ((:texture (new 'static 'texture-id :index #x46 :page #xc))
+  :init-specs ((:texture (gun-yellow-muzzleflash effects))
     (:birth-func 'birth-func-set-quat)
     (:num 1.0)
     (:scale-x (meters 1))
@@ -568,7 +568,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2294
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:scale-x (meters 0.75))
     (:rot-x (degrees 2.25))
@@ -604,41 +604,7 @@
 ;; WARN: Return type mismatch int vs none.
 (defbehavior under-sig-red-shot-overhead scene-player ((arg0 process-tree) (arg1 vector) (arg2 sparticle-launch-state))
   (when (not (-> self aborted?))
-    (let ((part (get-process *default-dead-pool* part-tracker #x4000)))
-      (when part
-        (let ((activate-func (method-of-type part-tracker activate)))
-          (activate-func
-            (the-as part-tracker part)
-            arg0
-            (symbol->string (-> part-tracker symbol))
-            (the-as pointer #x70004000)
-            )
-          )
-        (let ((t9-2 run-function-in-process)
-              (a0-3 part)
-              (a1-5 part-tracker-init)
-              (a2-3 (-> *part-group-id-table* 518))
-              (a3-1 0)
-              (t0-0 #f)
-              (t1-0 #f)
-              (t2-0 #f)
-              (t3-0 *launch-matrix*)
-              )
-          (set! (-> t3-0 trans quad) (-> arg1 quad))
-          ((the-as (function object object object object object object object object none) t9-2)
-           a0-3
-           a1-5
-           a2-3
-           a3-1
-           t0-0
-           t1-0
-           t2-0
-           t3-0
-           )
-          )
-        (-> part ppointer)
-        )
-      )
+    (part-tracker-spawn :to arg0 :group under-sig-shot-overhead-starflash :mat-joint arg1)
     (draw-beam (-> *part-id-table* 2291) arg1 (-> arg2 sprite rot-syvel) #f #t)
     (draw-beam (-> *part-id-table* 2292) arg1 (-> arg2 sprite rot-syvel) #f #t)
     )
@@ -667,7 +633,7 @@
       (let ((t9-4 run-function-in-process)
             (a0-7 part)
             (a1-6 part-tracker-init)
-            (a2-5 (-> *part-group-id-table* 146))
+            (a2-5 group-sig-shot-hit)
             (a3-2 0)
             (t0-1 #f)
             (t1-0 #f)

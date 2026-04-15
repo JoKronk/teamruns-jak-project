@@ -165,7 +165,7 @@
     (process-spawn
       part-tracker
       :init part-tracker-init
-      (-> *part-group-id-table* 471)
+      group-ogreboss-missile-impact
       -1
       #f
       #f
@@ -412,7 +412,7 @@
       (the-as float 2730.6667)
       )
     )
-  (set! (-> self part) (create-launch-control (-> *part-group-id-table* 469) self))
+  (set! (-> self part) (create-launch-control group-ogreboss-missile self))
   (set-vector! (-> self draw color-emissive) 0.125 0.0625 0.0 0.0)
   (go ogreboss-missile-idle)
   (none)
@@ -571,7 +571,7 @@
   (process-spawn
     part-tracker
     :init part-tracker-init
-    (-> *part-group-id-table* 471)
+    group-ogreboss-missile-impact
     -1
     #f
     #f
@@ -670,7 +670,7 @@
                 :frame-num 0.0
                 )
     (until (ja-done? 0)
-      (when (< 81920.0 (vector-vector-distance (the-as vector (-> self root root-prim prim-core)) (target-pos 0)))
+      (when (< 81920.0 (vector-vector-distance (-> self root root-prim prim-core world-sphere) (target-pos 0)))
         (ja-channel-push! 1 (seconds 0.1))
         (go ogreboss-super-boulder-roll)
         )
@@ -819,7 +819,7 @@
       )
     )
   (set! (-> self joint) (new 'process 'joint-mod-blend-local self 3 #f))
-  (set! (-> self part) (create-launch-control (-> *part-group-id-table* 468) self))
+  (set! (-> self part) (create-launch-control group-ogreboss-boulder-grow self))
   (set-vector! (-> self draw color-emissive) 0.125 0.0625 0.0 0.0)
   (set! (-> self speed) 1.0)
   (set! (-> self size) 0.0)
@@ -908,7 +908,7 @@
     (vector+*! (-> self root trans) (-> self src-pos) (-> self side-dir) (-> self side-pos))
     (transform-post)
     (find-ground-and-draw-shadow
-      (the-as vector (-> self root root-prim prim-core))
+      (-> self root root-prim prim-core world-sphere)
       (the-as vector #f)
       (the-as float 49152.0)
       (collide-kind background)
@@ -1290,7 +1290,7 @@
     (let ((s5-0 (new 'stack-no-clear 'vector)))
       (set! (-> gp-0 src) (-> self node-list data 52 bone transform vector 3))
       (set! (-> gp-0 duration)
-            (the-as time-frame (the int (* 300.0 (+ 1.25 (* -0.25 (-> self level)) (/ 0.5 (-> self difficulty))))))
+            (the-as time-frame (the int (* 300.0 (+ 1.25 (/ (-> self level) -4) (/ 0.5 (-> self difficulty))))))
             )
       (set! (-> gp-0 pickup-type) arg0)
       (set! (-> gp-0 blast-radius) 32768.0)
@@ -1322,7 +1322,7 @@
     (process-spawn
       part-tracker
       :init part-tracker-init
-      (-> *part-group-id-table* 470)
+      group-ogreboss-pre-missile
       -1
       #f
       #f
@@ -1566,7 +1566,7 @@
                            (* 0.0 f28-0)
                            )
                           ((< (-> self try-count) (the-as uint 10))
-                           (* 0.5 f28-0)
+                           (/ f28-0 2)
                            )
                           (else
                             (empty)
@@ -1640,7 +1640,7 @@
     (let ((f30-0 (the float (- (current-time) (-> self hit-time)))))
       (when (and (> (-> self hit-count) 0) (>= 45.0 f30-0))
         (set! f0-0 (+ (ja-aframe (the-as float 0.0) 1)
-                      (* 0.022222223 f30-0 (- (ja-aframe (the-as float 8.0) 1) (ja-aframe (the-as float 0.0) 1)))
+                      (* (/ f30-0 45) (- (ja-aframe (the-as float 8.0) 1) (ja-aframe (the-as float 0.0) 1)))
                       )
               )
         (set! f1-0 (cond
@@ -1817,7 +1817,7 @@
     )
   :code (behavior ()
     (set! (-> self shuffle-pos) 0.0)
-    (let ((f30-0 (+ 1.0 (* 0.25 (-> self difficulty) (-> self level))))
+    (let ((f30-0 (+ 1.0 (* (/ (-> self difficulty) 4) (-> self level))))
           (gp-0 (if (rand-vu-percent? (the-as float 0.5))
                     0
                     1

@@ -173,7 +173,7 @@
 (defun ogreboss-rock-explosion-effect ((arg0 basic))
   (with-pp
     (sound-play "ogre-explode" :position (the-as symbol arg0))
-    (process-spawn part-tracker :init part-tracker-init (-> *part-group-id-table* 471) -1 #f #f #f arg0 :to *entity-pool*)
+    (process-spawn part-tracker :init part-tracker-init group-ogreboss-missile-impact -1 #f #f #f arg0 :to *entity-pool*)
     (activate! *camera-smush-control* (the-as float 819.2) 37 600 (the-as float 1.0) (the-as float 0.995))
     (let ((gp-2 (manipy-spawn arg0 (-> pp entity) *ogreboss-shoot-boulder-break-sg* #f :to pp)))
       (quaternion-axis-angle! (-> (the-as manipy (-> gp-2 0)) root quat)
@@ -315,7 +315,7 @@
   (set! (-> self pickup-type) (-> arg0 pickup-type))
   (let ((f30-1 (* 65536.0 (rand-vu))))
     (quaternion-axis-angle! (-> self tumble-quat) (cos f30-1) (the-as float 0.0) (sin f30-1) (the-as float 2730.6667)))
-  (set! (-> self part) (create-launch-control (-> *part-group-id-table* 469) self))
+  (set! (-> self part) (create-launch-control group-ogreboss-missile self))
   (set-vector! (-> self draw color-emissive) 0.125 0.0625 0.0 0.0)
   (go ogreboss-missile-idle)
   (none))
@@ -409,7 +409,7 @@
   (process-spawn part-tracker
                  :init
                  part-tracker-init
-                 (-> *part-group-id-table* 471)
+                 group-ogreboss-missile-impact
                  -1
                  #f
                  #f
@@ -483,7 +483,7 @@
       (set! (-> self joint enable) #f)
       (ja-no-eval :group! ogreboss-super-boulder-roll-ja :num! (seek! (ja-aframe (the-as float 100.0) 0)) :frame-num 0.0)
       (until (ja-done? 0)
-        (when (< 81920.0 (vector-vector-distance (the-as vector (-> self root root-prim prim-core)) (target-pos 0)))
+        (when (< 81920.0 (vector-vector-distance (-> self root root-prim prim-core world-sphere) (target-pos 0)))
           (ja-channel-push! 1 (seconds 0.1))
           (go ogreboss-super-boulder-roll))
         (suspend)
@@ -580,7 +580,7 @@
   (let ((f30-1 (* 65536.0 (rand-vu))))
     (quaternion-axis-angle! (-> self tumble-quat) (cos f30-1) (the-as float 0.0) (sin f30-1) (the-as float 2730.6667)))
   (set! (-> self joint) (new 'process 'joint-mod-blend-local self 3 #f))
-  (set! (-> self part) (create-launch-control (-> *part-group-id-table* 468) self))
+  (set! (-> self part) (create-launch-control group-ogreboss-boulder-grow self))
   (set-vector! (-> self draw color-emissive) 0.125 0.0625 0.0 0.0)
   (set! (-> self speed) 1.0)
   (set! (-> self size) 0.0)
@@ -641,7 +641,7 @@
     (behavior ()
       (vector+*! (-> self root trans) (-> self src-pos) (-> self side-dir) (-> self side-pos))
       (transform-post)
-      (find-ground-and-draw-shadow (the-as vector (-> self root root-prim prim-core))
+      (find-ground-and-draw-shadow (-> self root root-prim prim-core world-sphere)
                                    (the-as vector #f)
                                    (the-as float 49152.0)
                                    (collide-kind background)
@@ -805,7 +805,10 @@
 (defstate ogreboss-idle (ogreboss)
   :enter
     (behavior ()
-      (when (zero? (-> self try-count))
+      (when (#if PC_PORT
+              ;; og:preserve-this skip intro cutscene (and breakable column spawning) for Mountain Pass IL speedruns
+              (and (zero? (-> self try-count)) (not (and PC_PORT (is-speedrun-category? 'il-ogre))))
+              (zero? (-> self try-count)))
         (let ((gp-0 (manipy-spawn (-> self root trans) (-> self entity) *ogreboss-column-sg* #f :to self)))
           (set! (-> self column) (ppointer->handle gp-0))
           (send-event (ppointer->process gp-0) 'anim-mode 'loop)
@@ -831,44 +834,34 @@
 (defstate ogreboss-intro (ogreboss)
   :code
     (behavior ()
-      (when (zero? (-> self try-count))
-        (cond
-          (*enable-ingame-cutscenes?*
-            (process-drawable-delay-player (seconds 1))
-            (let ((gp-0 (get-process *default-dead-pool* pov-camera #x4000)))
-              (ppointer->handle (when gp-0
-                                  (let ((t9-2 (method-of-type pov-camera activate)))
-                                    (t9-2 (the-as pov-camera gp-0) self 'pov-camera (the-as pointer #x70004000)))
-                                  (run-now-in-process gp-0
-                                                      pov-camera-init-by-other
-                                                      (-> self root trans)
-                                                      *ogreboss-cam-sg*
-                                                      "ogreboss-cam-intro"
-                                                      0
-                                                      #f
-                                                      '((0 setting-reset music ogreboss) (2 ambient camera "gamcam23")))
-                                  (-> gp-0 ppointer))))
-            (send-event (handle->process (-> self column)) 'anim-mode 'play1)
-            (send-event (handle->process (-> self column)) 'art-joint-anim "ogreboss-column-intro" 0)
-            (ja-no-eval :group! ogreboss-intro-ja :num! (seek!) :frame-num 0.0)
-            (until (ja-done? 0)
-              (suspend)
-              (ja :num! (seek!)))
-            (close-specific-task! (game-task ogre-boss) (task-status need-hint))
-            (suspend)
-            (send-event *target* 'continue (get-continue-by-name *game-info* "ogre-start"))
-            (ogreboss-inc-try-count))
-          (else
-            (send-event (handle->process (-> self column)) 'anim-mode 'play1)
-            (send-event (handle->process (-> self column)) 'art-joint-anim "ogreboss-column-intro" 0)
-            (ja-no-eval :group! ogreboss-intro-ja :num! (seek!) :frame-num 0.0)
-            (until (ja-done? 0)
-              (suspend)
-              (ja :num! (seek!))
-              )
-            (close-specific-task! (game-task ogre-boss) (task-status need-hint))
-            (suspend)
-            (ogreboss-inc-try-count))))
+      (when (#if PC_PORT
+              ;; og:preserve-this skip intro cutscene for Mountain Pass IL speedruns
+              (and (zero? (-> self try-count)) (not (and PC_PORT (is-speedrun-category? 'il-ogre))))
+              (zero? (-> self try-count)))
+        (process-drawable-delay-player (seconds 1))
+        (let ((gp-0 (get-process *default-dead-pool* pov-camera #x4000)))
+          (ppointer->handle (when gp-0
+                              (let ((t9-2 (method-of-type pov-camera activate)))
+                                (t9-2 (the-as pov-camera gp-0) self 'pov-camera (the-as pointer #x70004000)))
+                              (run-now-in-process gp-0
+                                                  pov-camera-init-by-other
+                                                  (-> self root trans)
+                                                  *ogreboss-cam-sg*
+                                                  "ogreboss-cam-intro"
+                                                  0
+                                                  #f
+                                                  '((0 setting-reset music ogreboss) (2 ambient camera "gamcam23")))
+                              (-> gp-0 ppointer))))
+        (send-event (handle->process (-> self column)) 'anim-mode 'play1)
+        (send-event (handle->process (-> self column)) 'art-joint-anim "ogreboss-column-intro" 0)
+        (ja-no-eval :group! ogreboss-intro-ja :num! (seek!) :frame-num 0.0)
+        (until (ja-done? 0)
+          (suspend)
+          (ja :num! (seek!)))
+        (close-specific-task! (game-task ogre-boss) (task-status need-hint))
+        (suspend)
+        (send-event *target* 'continue (get-continue-by-name *game-info* "ogre-start"))
+        (ogreboss-inc-try-count))
       (set-setting! 'music 'ogreboss 0.0 0)
       (go ogreboss-wait-for-player))
   :post ja-post)
@@ -912,7 +905,7 @@
       ;; og:preserve-this
       (set! (-> gp-0 src) (-> self node-list data (#if *jak1-full-game* 50 52) bone transform vector 3))
       (set! (-> gp-0 duration)
-            (the-as time-frame (the int (* 300.0 (+ 1.25 (* -0.25 (-> self level)) (/ 0.5 (-> self difficulty)))))))
+            (the-as time-frame (the int (* 300.0 (+ 1.25 (/ (-> self level) -4) (/ 0.5 (-> self difficulty)))))))
       (set! (-> gp-0 pickup-type) arg0)
       (set! (-> gp-0 blast-radius) 32768.0)
       (cond
@@ -931,7 +924,7 @@
     (process-spawn part-tracker
                    :init
                    part-tracker-init
-                   (-> *part-group-id-table* 470)
+                   group-ogreboss-pre-missile
                    -1
                    #f
                    #f
@@ -1090,7 +1083,7 @@
               (set! f28-0
                     (cond
                       ((< (-> self try-count) (the-as uint 5)) (* 0.0 f28-0))
-                      ((< (-> self try-count) (the-as uint 10)) (* 0.5 f28-0))
+                      ((< (-> self try-count) (the-as uint 10)) (/ f28-0 2))
                       (else (empty) f28-0)))
               (if (and *target* (< (rand-vu) f28-0)) (set! boulder-pickup (pickup-type eco-green))))
             (ogreboss-shoot-boulder (the-as pickup-type boulder-pickup)))
@@ -1132,7 +1125,7 @@
       (when (and (> (-> self hit-count) 0) (>= 45.0 f30-0))
         (set! f0-0
               (+ (ja-aframe (the-as float 0.0) 1)
-                 (* 0.022222223 f30-0 (- (ja-aframe (the-as float 8.0) 1) (ja-aframe (the-as float 0.0) 1)))))
+                 (* (/ f30-0 45) (- (ja-aframe (the-as float 8.0) 1) (ja-aframe (the-as float 0.0) 1)))))
         (set! f1-0
               (cond
                 ((< f30-0 7.5) (* 0.120000005 f30-0))
@@ -1246,7 +1239,7 @@
   :code
     (behavior ()
       (set! (-> self shuffle-pos) 0.0)
-      (let ((f30-0 (+ 1.0 (* 0.25 (-> self difficulty) (-> self level))))
+      (let ((f30-0 (+ 1.0 (* (/ (-> self difficulty) 4) (-> self level))))
             (gp-0 (if (rand-vu-percent? (the-as float 0.5)) 0 1)))
         (ja-channel-push! 1 (seconds 0.2))
         (ja-no-eval :group! ogreboss-shuffle-prepare-ja :num! (seek! max f30-0) :frame-num 0.0)

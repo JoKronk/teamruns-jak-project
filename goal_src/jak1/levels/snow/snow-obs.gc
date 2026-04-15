@@ -109,7 +109,7 @@
 
 (defpart 1995
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x2 :page #x2))
+  ((:texture (flare effects))
    (:num 30.0)
    (:y (meters -4))
    (:scale-x (meters 20) (meters 10))
@@ -135,7 +135,7 @@
 
 (defpart 1990
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 1.0)
    (:y (meters -4))
    (:scale-x (meters 10) (meters 2))
@@ -149,7 +149,7 @@
 
 (defpart 1991
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 1.0)
    (:y (meters -4))
    (:scale-x (meters 3) (meters 2))
@@ -163,7 +163,7 @@
 
 (defpart 1992
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1f :page #x2))
+  ((:texture (lightning effects))
    (:num 0.5 1.0)
    (:y (meters -4))
    (:scale-x (meters 3) (meters 3))
@@ -185,7 +185,7 @@
 
 (defpart 1993
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1f :page #x2))
+  ((:texture (lightning effects))
    (:num 0.5 1.0)
    (:y (meters -4))
    (:scale-x (meters 3) (meters 3))
@@ -204,7 +204,7 @@
 
 (defpart 1994
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1f :page #x2))
+  ((:texture (lightning effects))
    (:num 1.0 1.0)
    (:y (meters -6.5) (meters 1))
    (:scale-x (meters 6) (meters 2))
@@ -271,7 +271,7 @@
       (process-spawn part-tracker
                      :init
                      part-tracker-init
-                     (-> *part-group-id-table* 511)
+                     group-snow-yellow-eco-room-activate
                      -1
                      #f
                      #f
@@ -347,7 +347,7 @@
   (set! (-> this spawn-trans quad) (-> this root trans quad))
   (+! (-> this root trans y) -2662.4)
   (update-transforms! (-> this root))
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 510) this))
+  (set! (-> this part) (create-launch-control group-snow-yellow-eco-room-open this))
   (set! (-> this sound) (new 'process 'ambient-sound (static-sound-spec "electric-loop" :fo-max 40) (-> this root trans)))
   (cond
     ((task-complete? *game-info* (-> this entity extra perm task)) (go snow-eggtop-idle-down))
@@ -547,7 +547,7 @@
 
 (defpart 1896
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 0.5 1.0)
    (:x (meters -10) (meters 20))
    (:y (meters 0.5) (meters 1))
@@ -581,7 +581,7 @@
 
 (defpart 1898
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 64.0)
    (:x (meters -10) (meters 20))
    (:y (meters 0.5) (meters 1))
@@ -630,7 +630,7 @@
 
 (defpart 2271
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x4 :page #x2))
+  ((:texture (middot effects))
    (:num 0.25)
    (:x (meters -1) (meters 2))
    (:z (meters -1) (meters 2))
@@ -654,7 +654,7 @@
 
 (defpart 2272
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x4 :page #x2))
+  ((:texture (middot effects))
    (:num 1.0)
    (:x (meters -0.5) (meters 1))
    (:y (meters 1))
@@ -676,7 +676,7 @@
 
 (defpart 2273
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xb :page #x2))
+  ((:texture (lava-part-01 effects))
    (:num 0.25)
    (:x (meters -0.5) (meters 1))
    (:y (meters 1))
@@ -794,9 +794,9 @@
     (set! (-> this root) s4-0))
   (process-drawable-from-entity! this arg0)
   (initialize-skeleton this *snow-fort-gate-sg* '())
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 512) this))
-  (set! (-> this part2) (create-launch-control (-> *part-group-id-table* 513) this))
-  (set! (-> this part3) (create-launch-control (-> *part-group-id-table* 514) this))
+  (set! (-> this part) (create-launch-control group-snow-fort-gate-coming-down this))
+  (set! (-> this part2) (create-launch-control group-snow-fort-gate-hits-bottom this))
+  (set! (-> this part3) (create-launch-control group-snow-fort-gate-snowdrops this))
   (set! (-> this open-trans quad) (-> this root trans quad))
   (set! (-> this closed-trans quad) (-> this open-trans quad))
   (+! (-> this open-trans y) -141312.0)
@@ -840,7 +840,7 @@
 
 (defpart 1900
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1d :page #x2))
+  ((:texture (rockbit effects))
    (:num 0.5)
    (:x (meters -9) (meters 18))
    (:y (meters -6))
@@ -862,7 +862,7 @@
 
 (defpart 1901
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 1.0)
    (:y (meters -7))
    (:scale-x (meters 3) (meters 4.5))
@@ -973,7 +973,7 @@
   (set! (-> this root) (new 'process 'trsqv))
   (process-drawable-from-entity! this arg0)
   (initialize-skeleton this *snow-gears-sg* '())
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 515) this))
+  (set! (-> this part) (create-launch-control group-snow-gears-dripping this))
   (set! (-> this sound) (new 'process 'ambient-sound (static-sound-spec "snow-engine" :fo-max 300) (-> this root trans)))
   (go snow-gears-idle)
   (none))

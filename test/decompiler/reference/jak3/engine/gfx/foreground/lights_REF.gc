@@ -109,7 +109,7 @@
 
 ;; definition (debug) for function reset-light-hash
 ;; WARN: Return type mismatch int vs none.
-(defun-debug reset-light-hash ()
+(defun-debug reset-light-hash ((arg0 light-hash))
   "Resets the global [[*light-hash*]] back to having `0` lights, indicies, and buckets.
    @returns [[none]]"
   (set! (-> *light-hash* num-lights) (the-as uint 0))
@@ -141,7 +141,7 @@
             (+! f0-0 (-> a1-9 bsphere w))
             )
           )
-        (set! (-> arg0 base-trans quad) (-> v1-0 min quad))
+        (vector-copy! (-> arg0 base-trans) (-> v1-0 min))
         (let ((f0-1 (/ f0-0 (the float (-> arg0 num-lights)))))
           (dotimes (a0-8 3)
             (set! (-> s5-0 data a0-8) (- (-> v1-0 max data a0-8) (-> v1-0 min data a0-8)))

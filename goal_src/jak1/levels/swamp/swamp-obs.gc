@@ -27,7 +27,7 @@
 
 (defpart 1325
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 16.0)
    (:x (meters -2) 2 (meters 2))
    (:y (meters 0.75))
@@ -54,7 +54,7 @@
 
 (defpart 1326
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 16.0)
    (:x (meters -2) 2 (meters 2))
    (:y (meters -0.75))
@@ -78,7 +78,7 @@
 
 (defpart 1327
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1d :page #x2))
+  ((:texture (rockbit effects))
    (:num 8.0)
    (:x (meters -2) 2 (meters 2))
    (:y (meters 0.25))
@@ -119,6 +119,7 @@
    (init! (_type_) symbol))
   (:states
    swamp-spike-idle))
+
 
 (defskelgroup *swamp-spike-sg*
   swamp-spike
@@ -184,7 +185,7 @@
                  (process-spawn part-tracker
                                 :init
                                 part-tracker-init
-                                (-> *part-group-id-table* 289)
+                                group-swamp-spike-up
                                 -1
                                 swamp-spike-set-particle-rotation-callback
                                 (-> self ppointer)
@@ -206,7 +207,7 @@
                  (process-spawn part-tracker
                                 :init
                                 part-tracker-init
-                                (-> *part-group-id-table* 290)
+                                group-swamp-spike-down
                                 -1
                                 swamp-spike-set-particle-rotation-callback
                                 (-> self ppointer)
@@ -235,7 +236,7 @@
       (process-spawn part-tracker
                      :init
                      part-tracker-init
-                     (-> *part-group-id-table* 290)
+                     group-swamp-spike-down
                      -1
                      swamp-spike-set-particle-rotation-callback
                      (-> self ppointer)
@@ -302,6 +303,7 @@
    swamp-spike-gate-down
    swamp-spike-gate-up))
 
+
 (defmethod init-from-entity! ((this swampgate) (arg0 entity-actor))
   (init! this)
   (if (logtest? (-> arg0 extra perm status) (entity-perm-status complete)) (go swamp-spike-gate-down) (go swamp-spike-gate-up))
@@ -317,6 +319,7 @@
    (got-grow symbol))
   (:states
    balance-plat-idle))
+
 
 (defskelgroup *balance-plat-sg*
   balance-plat
@@ -337,36 +340,41 @@
         ;; og:preserve-this modified for high fps
         (let ((f30-0 (* -0.025 (+ (-> self y-offset) (-> self y-travel))))
               (f28-0 (* -0.025 (- (-> self y-offset) (-> self y-travel)))))
-          (cond
-            ((and (-> self root riders) (nonzero? (-> self root riders num-riders)))
-             ;; has rider, accelerate downwards
-             (send-event *target* 'no-look-around (seconds 0.25))
-             (set! (-> self y-accel) (fmin 4.096 (fmax -4.096 (+ (* DISPLAY_FPS_RATIO -0.2048) (-> self y-accel)))))
-             (set! (-> self y-vel) (fmin f28-0 (fmax f30-0 (+ (-> self y-vel) (* DISPLAY_FPS_RATIO (-> self y-accel))))))
-             ;; tell linked platforms to go up
-             (send-to-all-after (-> self link) 'grow)
-             (send-to-all-before (-> self link) 'grow))
-            ((-> self got-grow)
-             ;; got 'grow' signal, accelerate upwards
-             (set! (-> self got-grow) #f)
-             (set! (-> self y-accel) (fmin 4.096 (fmax -4.096 (+ (* DISPLAY_FPS_RATIO 0.2048) (-> self y-accel)))))
-             (set! (-> self y-vel) (fmin f28-0 (fmax f30-0 (+ (-> self y-vel) (* DISPLAY_FPS_RATIO (-> self y-accel)))))))
-            ((< (-> self y-offset) 0.0)
-             ;; accelerate towards neutral position (from below)
-             (set! (-> self y-accel)
-                   (fmin (fmin 4.096 (fmax -4.096 (+ (* DISPLAY_FPS_RATIO 0.1024) (-> self y-accel)))) (* -0.0001 (-> self y-offset))))
-             (set! (-> self y-vel) (fmin f28-0 (fmax f30-0 (+ (-> self y-vel) (* DISPLAY_FPS_RATIO (-> self y-accel))))))
-             ;; slow down
-             (set! (-> self y-vel) (* (- 1.0 (* DISPLAY_FPS_RATIO (- 1.0 0.99))) (-> self y-vel))))
-            (else
-             ;; accelerate towards neutral position (from above)
-             (set! (-> self y-accel)
-                   (fmin 4.096 (fmax (fmax -4.096 (+ (* DISPLAY_FPS_RATIO -0.1024) (-> self y-accel))) (* -0.0001 (-> self y-offset)))))
-             (set! (-> self y-vel) (fmin f28-0 (fmax f30-0 (+ (-> self y-vel) (* DISPLAY_FPS_RATIO (-> self y-accel))))))
-             ;; slow down
-             (set! (-> self y-vel) (* (- 1.0 (* DISPLAY_FPS_RATIO (- 1.0 0.99))) (-> self y-vel))))))
-        (+! (-> self y-offset) (* DISPLAY_FPS_RATIO (-> self y-vel)))
-        (set! (-> self root trans y) (+ (-> self y-init) (-> self y-offset)))
+          (when (or (= (-> *pc-settings* target-fps) 60) ;; always run untouched if 60 FPS
+                    (time-elapsed? (-> self state-time) (seconds 0.01666666)) ;; added for high-fps, gate riding like 60 fps
+                    (-> self got-grow)) ;; don't gate grow recieve since grow send is gated
+            (cond
+              ((and (-> self root riders) (nonzero? (-> self root riders num-riders)))
+               (set-state-time) ;; added for high-fps, record last ride to gate to 60 FPS
+               ;; has rider, accelerate downwards
+               (send-event *target* 'no-look-around (seconds 0.25))
+               (set! (-> self y-accel) (fmin 4.096 (fmax -4.096 (+ -0.2048 (-> self y-accel)))))
+               (set! (-> self y-vel) (fmin f28-0 (fmax f30-0 (+ (-> self y-vel) (* DISPLAY_FPS_RATIO (-> self y-accel))))))
+               ;; tell linked platforms to go up
+               (send-to-all-after (-> self link) 'grow)
+               (send-to-all-before (-> self link) 'grow))
+              ((-> self got-grow)
+               (set-state-time) ;; added for high-fps, gate after grow recieve to stop passive return stomping it at high fps
+               ;; got 'grow' signal, accelerate upwards
+               (set! (-> self got-grow) #f)
+               (set! (-> self y-accel) (fmin 4.096 (fmax -4.096 (+ 0.2048 (-> self y-accel)))))
+               (set! (-> self y-vel) (fmin f28-0 (fmax f30-0 (+ (-> self y-vel) (* DISPLAY_FPS_RATIO (-> self y-accel)))))))
+              ((< (-> self y-offset) 0.0)
+               ;; accelerate towards neutral position (from below)
+               (set! (-> self y-accel)
+                     (fmin (fmin 4.096 (fmax -4.096 (+ 0.1024 (-> self y-accel)))) (* -0.0001 (-> self y-offset))))
+               (set! (-> self y-vel) (fmin f28-0 (fmax f30-0 (+ (-> self y-vel) (* DISPLAY_FPS_RATIO (-> self y-accel))))))
+               ;; slow down
+               (set! (-> self y-vel) (* (- 1.0 (* DISPLAY_FPS_RATIO (- 1.0 0.99))) (-> self y-vel))))
+              (else
+               ;; accelerate towards neutral position (from above)
+               (set! (-> self y-accel)
+                     (fmin 4.096 (fmax (fmax -4.096 (+ -0.1024 (-> self y-accel))) (* -0.0001 (-> self y-offset)))))
+               (set! (-> self y-vel) (fmin f28-0 (fmax f30-0 (+ (-> self y-vel) (* DISPLAY_FPS_RATIO (-> self y-accel))))))
+               ;; slow down
+               (set! (-> self y-vel) (* (- 1.0 (* DISPLAY_FPS_RATIO (- 1.0 0.99))) (-> self y-vel))))))
+          (+! (-> self y-offset) (* DISPLAY_FPS_RATIO (-> self y-vel)))
+          (set! (-> self root trans y) (+ (-> self y-init) (-> self y-offset))))
         (suspend)))
   :post rider-post)
 
@@ -407,6 +415,7 @@
    swamp-rock-break
    swamp-rock-idle))
 
+
 (defpartgroup group-swamp-rock-explosion
   :id 291
   :duration (seconds 1)
@@ -419,7 +428,7 @@
 
 (defpart 1331
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x12 :page #x2))
+  ((:texture (starflash effects))
    (:num 1.0)
    (:scale-x (meters 15))
    (:scale-y :copy scale-x)
@@ -433,7 +442,7 @@
 
 (defpart 1330
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1d :page #x2))
+  ((:texture (rockbit effects))
    (:num 16.0 16.0)
    (:scale-x (meters 0.1) (meters 0.3))
    (:rot-z (degrees 0) (degrees 360))
@@ -455,7 +464,7 @@
 
 (defpart 1332
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 16.0)
    (:y (meters 0.5) (meters 1))
    (:scale-x (meters 2.5) (meters 1.5))
@@ -494,7 +503,7 @@
       (process-spawn part-tracker
                      :init
                      part-tracker-init
-                     (-> *part-group-id-table* 291)
+                     group-swamp-rock-explosion
                      -1
                      #f
                      #f
@@ -537,7 +546,7 @@
     (vector-float*! (-> this root scale) *identity-vector* f30-0))
   (initialize-skeleton this *swamp-rock-sg* '())
   (nav-mesh-connect this (-> this root) (the-as nav-control #f))
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 291) this))
+  (set! (-> this part) (create-launch-control group-swamp-rock-explosion this))
   (go swamp-rock-idle)
   (none))
 
@@ -562,7 +571,7 @@
   (set! (-> self root trans quad) (-> arg0 quad))
   (initialize-skeleton self *swamp-rock-sg* '())
   (nav-mesh-connect self (-> self root) (the-as nav-control #f))
-  (set! (-> self part) (create-launch-control (-> *part-group-id-table* 291) self))
+  (set! (-> self part) (create-launch-control group-swamp-rock-explosion self))
   (go swamp-rock-idle)
   (none))
 
@@ -603,6 +612,7 @@
 (deftype tar-plat (rigid-body-platform)
   ((anchor-point vector :inline)
    (float-height float)))
+
 
 (defmethod rigid-body-platform-method-22 ((this tar-plat) (arg0 vector) (arg1 float))
   (+ (-> this float-height)
@@ -689,7 +699,9 @@
 
 (deftype swamp-barrel (barrel) ())
 
+
 (deftype swampcam (process-hidden) ())
+
 
 (defskelgroup *swampcam-sg*
   swampcam
@@ -699,6 +711,7 @@
   :bounds (static-spherem 0 0 0 15))
 
 (deftype swamp-battlecontroller (battlecontroller) ())
+
 
 (defstate battlecontroller-play-intro-camera (swamp-battlecontroller)
   :virtual #t

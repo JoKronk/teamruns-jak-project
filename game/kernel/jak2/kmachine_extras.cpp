@@ -6,10 +6,9 @@
 #include "kscheme.h"
 
 #include "common/symbols.h"
-#include "common/util/FontUtils.h"
+#include "common/util/font/font_utils.h"
 
 #include "game/external/discord.h"
-#include "game/external/discord_jak1.h"
 #include "game/external/discord_jak2.h"
 #include "game/kernel/common/Symbol4.h"
 #include "game/kernel/common/kmachine.h"
@@ -194,13 +193,6 @@ inline u64 bool_to_symbol(const bool val) {
 
 inline bool symbol_to_bool(const u32 symptr) {
   return symptr != s7.offset;
-}
-
-// TODO - move to common
-void encode_utf8_string(u32 src_str_ptr, u32 str_dest_ptr) {
-  auto str = std::string(Ptr<String>(src_str_ptr).c()->data());
-  std::string converted = get_font_bank(GameTextVersion::JAK2)->convert_utf8_to_game(str);
-  strcpy(Ptr<String>(str_dest_ptr).c()->data(), converted.c_str());
 }
 
 void init_autosplit_struct() {

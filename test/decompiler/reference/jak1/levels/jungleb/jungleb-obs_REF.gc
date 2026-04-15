@@ -51,7 +51,7 @@
 
 ;; failed to figure out what this is:
 (defpart 904
-  :init-specs ((:texture (new 'static 'texture-id :index #x2 :page #x2))
+  :init-specs ((:texture (flare effects))
     (:num 30.0)
     (:y (meters -4))
     (:scale-x (meters 20) (meters 10))
@@ -83,7 +83,7 @@
 
 ;; failed to figure out what this is:
 (defpart 899
-  :init-specs ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  :init-specs ((:texture (hotdot effects))
     (:num 1.0)
     (:y (meters -4))
     (:scale-x (meters 10) (meters 2))
@@ -99,7 +99,7 @@
 
 ;; failed to figure out what this is:
 (defpart 900
-  :init-specs ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  :init-specs ((:texture (hotdot effects))
     (:num 1.0)
     (:y (meters -4))
     (:scale-x (meters 3) (meters 2))
@@ -115,7 +115,7 @@
 
 ;; failed to figure out what this is:
 (defpart 901
-  :init-specs ((:texture (new 'static 'texture-id :index #x1f :page #x2))
+  :init-specs ((:texture (lightning effects))
     (:num 0.5 1.0)
     (:y (meters -4))
     (:scale-x (meters 3) (meters 3))
@@ -141,7 +141,7 @@
 
 ;; failed to figure out what this is:
 (defpart 902
-  :init-specs ((:texture (new 'static 'texture-id :index #x1f :page #x2))
+  :init-specs ((:texture (lightning effects))
     (:num 0.5 1.0)
     (:y (meters -4))
     (:scale-x (meters 3) (meters 3))
@@ -162,7 +162,7 @@
 
 ;; failed to figure out what this is:
 (defpart 903
-  :init-specs ((:texture (new 'static 'texture-id :index #x1f :page #x2))
+  :init-specs ((:texture (lightning effects))
     (:num 1.0 1.0)
     (:y (meters -6.5) (meters 1))
     (:scale-x (meters 6) (meters 2))
@@ -229,7 +229,7 @@
       (process-spawn
         part-tracker
         :init part-tracker-init
-        (-> *part-group-id-table* 190)
+        group-jungle-blue-eco-room-activate
         -1
         #f
         #f
@@ -323,7 +323,7 @@
   (initialize-skeleton this *eggtop-sg* '())
   (logior! (-> this skel status) (janim-status inited))
   (update-transforms! (-> this root))
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 189) this))
+  (set! (-> this part) (create-launch-control group-jungle-blue-eco-room-open this))
   (set! (-> this sound-id) (new-sound-id))
   (cond
     ((task-complete? *game-info* (-> this entity extra perm task))

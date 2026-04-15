@@ -46,7 +46,7 @@
 
 (defpart 741
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x3 :page #x45f))
+  ((:texture (zoomerhud-main-03 zoomerhud))
    (:num 1.0)
    (:scale-x (meters 3))
    (:rot-x 4)
@@ -60,7 +60,7 @@
 
 (defpart 740
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x6 :page #x45f))
+  ((:texture (zoomerhud-main-03arrow zoomerhud))
    (:num 1.0)
    (:scale-x (meters 1))
    (:rot-x 4)
@@ -76,7 +76,7 @@
 
 (defpart 1999
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x7 :page #x45f))
+  ((:texture (zoomerhud-main-03knob zoomerhud))
    (:num 1.0)
    (:scale-x (meters 0.8))
    (:rot-x 4)
@@ -162,7 +162,7 @@
 
 (defpart 739
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x2 :page #x45f))
+  ((:texture (zoomerhud-main-02 zoomerhud))
    (:num 1.0)
    (:scale-x (meters 3))
    (:rot-x 4)
@@ -176,7 +176,7 @@
 
 (defpart 737
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x5 :page #x45f))
+  ((:texture (zoomerhud-heatbg-01 zoomerhud))
    (:num 1.0)
    (:scale-x (meters 3.5))
    (:rot-x 4)
@@ -190,7 +190,7 @@
 
 (defpart 738
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x45f))
+  ((:texture (zoomerhud-dial zoomerhud))
    (:num 1.0)
    (:scale-x (meters 0.9))
    (:rot-x 4)
@@ -205,7 +205,7 @@
 
 (defpart 2010
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x32 :page #x2))
+  ((:texture (hud-pie effects))
    (:num 1.0)
    (:scale-x (meters 2))
    (:scale-y :copy scale-x)
@@ -219,7 +219,7 @@
 
 (defpart 2011
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x32 :page #x2))
+  ((:texture (hud-pie effects))
    (:num 1.0)
    (:scale-x (meters 2))
    (:scale-y :copy scale-x)
@@ -233,7 +233,7 @@
 
 (defpart 2012
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x32 :page #x2))
+  ((:texture (hud-pie effects))
    (:num 1.0)
    (:scale-x (meters 2))
    (:scale-y :copy scale-x)
@@ -247,6 +247,7 @@
 
 (deftype hud-bike-heat (hud) ())
 
+
 (defmethod hud-update ((this hud-bike-heat))
   (if *target* (tally-value this (the int (-> *target* racer heat)) 0))
   0
@@ -257,7 +258,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-0 (-> this nb-of-particles)))
       (set! (-> this particles s5-0) (new 'static 'hud-particle))
-      (set! (-> this particles s5-0 part) (create-launch-control (-> *part-group-id-table* 111) this))
+      (set! (-> this particles s5-0 part) (create-launch-control group-part-hud-racer-heat-backing this))
       (set! (-> this particles s5-0 init-pos x) 13.0)
       (set! (-> this particles s5-0 init-pos y) 370.0)
       (set! (-> this particles s5-0 init-pos z) 10.0)
@@ -266,7 +267,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-1 (-> this nb-of-particles)))
       (set! (-> this particles s5-1) (new 'static 'hud-particle))
-      (set! (-> this particles s5-1 part) (create-launch-control (-> *part-group-id-table* 112) this))
+      (set! (-> this particles s5-1 part) (create-launch-control group-part-hud-racer-heat-dial this))
       (set! (-> this particles s5-1 init-pos x) 70.0)
       (set! (-> this particles s5-1 init-pos y) 370.0)
       (set! (-> this particles s5-1 init-pos z) 6.0)
@@ -275,7 +276,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-2 (-> this nb-of-particles)))
       (set! (-> this particles s5-2) (new 'static 'hud-particle))
-      (set! (-> this particles s5-2 part) (create-launch-control (-> *part-group-id-table* 113) this))
+      (set! (-> this particles s5-2 part) (create-launch-control group-part-hud-racer-heat this))
       (set! (-> this particles s5-2 init-pos x) 20.0)
       (set! (-> this particles s5-2 init-pos y) 370.0)
       (set! (-> this particles s5-2 init-pos z) 1.0)
@@ -284,7 +285,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-3 (-> this nb-of-particles)))
       (set! (-> this particles s5-3) (new 'static 'hud-particle))
-      (set! (-> this particles s5-3 part) (create-launch-control (-> *part-group-id-table* 114) this))
+      (set! (-> this particles s5-3 part) (create-launch-control group-part-hud-racer-heat-slice this))
       (set! (-> this particles s5-3 init-pos x) 70.0)
       (set! (-> this particles s5-3 init-pos y) 370.0)
       (set! (-> this particles s5-3 init-pos z) 7.0)
@@ -300,6 +301,7 @@
 
 (deftype hud-bike-speed (hud) ())
 
+
 (defmethod hud-update ((this hud-bike-speed))
   (if *target* (tally-value this (the int (-> *target* control unknown-float01)) 0))
   0
@@ -310,7 +312,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-0 (-> this nb-of-particles)))
       (set! (-> this particles s5-0) (new 'static 'hud-particle))
-      (set! (-> this particles s5-0 part) (create-launch-control (-> *part-group-id-table* 108) this))
+      (set! (-> this particles s5-0 part) (create-launch-control group-part-hud-racer-speed-dial this))
       (set! (-> this particles s5-0 init-pos x) 433.0)
       (set! (-> this particles s5-0 init-pos y) 370.0)
       (set! (-> this particles s5-0 init-pos z) 3.0)
@@ -319,7 +321,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-1 (-> this nb-of-particles)))
       (set! (-> this particles s5-1) (new 'static 'hud-particle))
-      (set! (-> this particles s5-1 part) (create-launch-control (-> *part-group-id-table* 109) this))
+      (set! (-> this particles s5-1 part) (create-launch-control group-part-hud-racer-speed this))
       (set! (-> this particles s5-1 init-pos x) 378.0)
       (set! (-> this particles s5-1 init-pos y) 370.0)
       (set! (-> this particles s5-1 init-pos z) 5.0)
@@ -328,7 +330,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-2 (-> this nb-of-particles)))
       (set! (-> this particles s5-2) (new 'static 'hud-particle))
-      (set! (-> this particles s5-2 part) (create-launch-control (-> *part-group-id-table* 110) this))
+      (set! (-> this particles s5-2 part) (create-launch-control group-part-hud-racer-speed-front this))
       (set! (-> this particles s5-2 init-pos x) 415.0)
       (set! (-> this particles s5-2 init-pos y) 370.0)
       (set! (-> this particles s5-2 init-pos z) 1.0)
@@ -380,7 +382,7 @@
 
 (defpart 742
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x29 :page #x2))
+  ((:texture (bigpuff-half effects))
    (:num 0.5)
    (:y (meters 7))
    (:scale-x (meters 14) (meters 1))
@@ -394,7 +396,7 @@
 
 (defpart 743
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x29 :page #x2))
+  ((:texture (bigpuff-half effects))
    (:num 0.5)
    (:y (meters 4))
    (:scale-x (meters 7) (meters 1))
@@ -409,7 +411,7 @@
 
 (defpart 744
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1e :page #x2))
+  ((:texture (water-ring effects))
    (:num 1.0)
    (:y (meters 0.75) (meters 0.1))
    (:scale-x (meters 0))
@@ -431,7 +433,7 @@
 
 (defpart 2211
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 8.0)
    (:scale-x (meters 1) (meters 1))
    (:rot-z (degrees 0) (degrees 360))
@@ -452,7 +454,7 @@
 
 (defpart 2207
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 1.0 1.0)
    (:scale-x (meters 1) (meters 1))
    (:rot-z (degrees 0) (degrees 360))
@@ -475,7 +477,7 @@
 
 (defpart 2221
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x17 :page #x2))
+  ((:texture (woodchip effects))
    (:num 0.5 1.0)
    (:scale-x (meters 0.15) (meters 0.35))
    (:rot-z (degrees 0) (degrees 360))
@@ -496,7 +498,7 @@
 
 (defpart 2208
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 1.0 1.0)
    (:scale-x (meters 1) (meters 1))
    (:rot-z (degrees 0) (degrees 360))
@@ -519,7 +521,7 @@
 
 (defpart 2218
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x9 :page #x2))
+  ((:texture (lakedrop effects))
    (:num 1.0 1.0)
    (:scale-x (meters 0.1) (meters 0.1))
    (:rot-z (degrees 0) (degrees 360))
@@ -541,7 +543,7 @@
 
 (defpart 2215
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 1.0 1.0)
    (:scale-x (meters 1) (meters 1))
    (:rot-z (degrees 0) (degrees 360))
@@ -564,7 +566,7 @@
 
 (defpart 2216
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 1.0 1.0)
    (:scale-x (meters 1) (meters 1))
    (:rot-z (degrees 0) (degrees 360))
@@ -587,7 +589,7 @@
 
 (defpart 2831
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 1.0 1.0)
    (:scale-x (meters 1) (meters 1))
    (:rot-z (degrees 0) (degrees 360))
@@ -610,7 +612,7 @@
 
 (defpart 2214
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 1.0 1.0)
    (:scale-x (meters 1) (meters 1))
    (:rot-z (degrees 0) (degrees 360))
@@ -633,7 +635,7 @@
 
 (defpart 2220
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1 :page #x2))
+  ((:texture (e-white effects))
    (:num 1.0 1.0)
    (:scale-x (meters 0.05) (meters 0.025))
    (:rot-z (degrees 0) (degrees 360))
@@ -655,7 +657,7 @@
 
 (defpart 2213
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 1.0 1.0)
    (:scale-x (meters 1) (meters 1))
    (:rot-z (degrees 0) (degrees 360))
@@ -678,7 +680,7 @@
 
 (defpart 2275
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xa :page #x2))
+  ((:texture (water-wave effects))
    (:num 0.06)
    (:x (meters 10))
    (:scale-x (meters 1.5) (meters 3))
@@ -701,7 +703,7 @@
 
 (defpart 2276
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1e :page #x2))
+  ((:texture (water-ring effects))
    (:num 0.04 0.03)
    (:x (meters -0.2) (meters 0.4))
    (:z (meters -0.2) (meters 0.4))
@@ -722,7 +724,7 @@
 
 (defpart 2212
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x4 :page #x2))
+  ((:texture (middot effects))
    (:birth-func 'birth-func-vector-orient)
    (:num 1.0)
    (:scale-x (meters 4) (meters -0.5))
@@ -740,7 +742,7 @@
 
 (defpart 2225
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1 :page #x2))
+  ((:texture (e-white effects))
    (:num 4.0 16.0)
    (:x (meters 0.9))
    (:y (meters 0.05))
@@ -768,7 +770,7 @@
 
 (defpart 2226
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1 :page #x2))
+  ((:texture (e-white effects))
    (:num 4.0 16.0)
    (:x (meters 0.9))
    (:y (meters 0.05))
@@ -796,7 +798,7 @@
 
 (defpart 2227
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 0.0)
    (:scale-x (meters 1.5) (meters 0.5))
    (:rot-z (degrees 0) (degrees 360))
@@ -836,7 +838,7 @@
 
 (defpart 2280
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 8.0)
    (:y (meters 0) (meters 1))
    (:scale-x (meters 0.4) (meters 0.8))
@@ -865,7 +867,7 @@
 
 (defpart 2282
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 6.0)
    (:y (meters 0) (meters 1))
    (:scale-x (meters 0.3))
@@ -884,7 +886,7 @@
 
 (defpart 2279
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x12 :page #x2))
+  ((:texture (starflash effects))
    (:num 1.0)
    (:y (meters 2))
    (:scale-x (meters 24))
@@ -899,7 +901,7 @@
 
 (defpart 2281
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 16.0)
    (:y (meters 0) (meters 1))
    (:scale-x (meters 3) (meters 1.5))
@@ -941,7 +943,7 @@
 
 (defpart 2229
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x12 :page #x2))
+  ((:texture (starflash effects))
    (:num 1.0)
    (:scale-x (meters 0.1) (meters 0.15))
    (:scale-y :copy scale-x)

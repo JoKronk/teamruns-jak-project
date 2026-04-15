@@ -49,7 +49,7 @@
   )
 
 (defpart 4966
-  :init-specs ((:texture (new 'static 'texture-id :index #x34 :page #xc))
+  :init-specs ((:texture (explosion-wave effects))
     (:num 0.8)
     (:scale-x (meters 1) (meters 1))
     (:rot-z (degrees 0) (degrees 360) :store)
@@ -74,7 +74,7 @@
   )
 
 (defpart 4965
-  :init-specs ((:texture (new 'static 'texture-id :index #x33 :page #xc))
+  :init-specs ((:texture (explosion-nebula effects))
     (:num 0.8)
     (:scale-x (meters 1) (meters 1))
     (:rot-z (degrees 0))
@@ -137,7 +137,7 @@
   )
 
 (defpart 4961
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:scale-x (meters 5))
     (:rot-x (degrees 11.25))
@@ -171,7 +171,7 @@
   )
 
 (defpart 4960
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 5))
     (:rot-x (degrees 11.25))
@@ -205,7 +205,7 @@
   )
 
 (defpart 4964
-  :init-specs ((:texture (new 'static 'texture-id :index #x32 :page #xc))
+  :init-specs ((:texture (specs effects))
     (:num 6.0 2.0)
     (:x (meters 0.25))
     (:scale-x (meters 1) (meters 0.25))
@@ -248,7 +248,7 @@
   )
 
 (defpart 4962
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 2.0 1.0)
     (:x (meters 0) (meters 0.6))
     (:scale-x (meters 2.5) (meters 2))
@@ -308,7 +308,7 @@
   )
 
 (defpart 4963
-  :init-specs ((:texture (new 'static 'texture-id :index #x31 :page #xc))
+  :init-specs ((:texture (flamingstick effects))
     (:num 4.0 2.0)
     (:scale-x (meters 0.2) (meters 0.5))
     (:rot-x 4)
@@ -440,14 +440,16 @@
         (ja :num! (seek! max f30-0))
         )
       (ja-no-eval :group! dig-bomb-crate-cylinder-idle-ja :num! (seek!) :frame-num 0.0)
-      (suspend-for (seconds 0.5))
+      (suspend-for (seconds 0.5)
+        )
       (ja-no-eval :group! dig-bomb-crate-cylinder-pulse-ja :num! (seek! max f30-0) :frame-num 0.0)
       (until (ja-done? 0)
         (suspend)
         (ja :num! (seek! max f30-0))
         )
       (ja-no-eval :group! dig-bomb-crate-cylinder-idle-ja :num! (seek!) :frame-num 0.0)
-      (suspend-for (seconds 0.5))
+      (suspend-for (seconds 0.5)
+        )
       (ja-no-eval :group! dig-bomb-crate-cylinder-pulse-ja :num! (seek! max f30-0) :frame-num 0.0)
       (until (ja-done? 0)
         (suspend)
@@ -455,21 +457,24 @@
         )
       )
     (ja-no-eval :group! dig-bomb-crate-cylinder-idle-ja :num! (seek!) :frame-num 0.0)
-    (suspend-for (seconds 0.5))
+    (suspend-for (seconds 0.5)
+      )
     (ja-no-eval :group! dig-bomb-crate-cylinder-pulse-ja :num! (seek! max 0.375) :frame-num 0.0)
     (until (ja-done? 0)
       (suspend)
       (ja :num! (seek! max 0.375))
       )
     (ja-no-eval :group! dig-bomb-crate-cylinder-idle-ja :num! (seek!) :frame-num 0.0)
-    (suspend-for (seconds 0.25))
+    (suspend-for (seconds 0.25)
+      )
     (ja-no-eval :group! dig-bomb-crate-cylinder-pulse-ja :num! (seek! max 0.4375) :frame-num 0.0)
     (until (ja-done? 0)
       (suspend)
       (ja :num! (seek! max 0.4375))
       )
     (ja-no-eval :group! dig-bomb-crate-cylinder-idle-ja :num! (seek!) :frame-num 0.0)
-    (suspend-for (seconds 0.125))
+    (suspend-for (seconds 0.125)
+      )
     (dotimes (gp-6 12)
       (ja-no-eval :group! dig-bomb-crate-cylinder-pulse-ja :num! (seek! max 0.437) :frame-num 0.0)
       (until (ja-done? 0)
@@ -477,7 +482,8 @@
         (ja :num! (seek! max 0.437))
         )
       (ja-no-eval :group! dig-bomb-crate-cylinder-idle-ja :num! (seek!) :frame-num 0.0)
-      (suspend-for (seconds 0.05))
+      (suspend-for (seconds 0.05)
+        )
       )
     (go-virtual die)
     )
@@ -500,7 +506,7 @@
       (set! (-> gp-1 spawn-point quad) (-> self root trans quad))
       (quaternion-copy! (-> gp-1 spawn-quat) (-> self root quat))
       (set! (-> gp-1 radius) 28672.0)
-      (set! (-> gp-1 group) (-> *part-group-id-table* 1146))
+      (set! (-> gp-1 group) group-dig-cylinder-hit)
       (set! (-> gp-1 collide-with)
             (collide-spec backgnd jak crate civilian enemy obstacle vehicle-sphere hit-by-others-list player-list pusher)
             )
@@ -811,12 +817,7 @@
       )
     0
     (logclear! (-> self mask) (process-mask actor-pause))
-    (let* ((gp-0 *target*)
-           (a0-4 (if (type? gp-0 process-focusable)
-                     gp-0
-                     )
-                 )
-           )
+    (let ((a0-4 (the-as target (as-type *target* process-focusable))))
       (if a0-4
           (dig-bomb-crate-method-29 self (get-trans a0-4 0))
           )
@@ -827,12 +828,7 @@
     (logior! (-> self draw status) (draw-control-status no-draw))
     (sound-play "bomb-rack-break")
     (let ((gp-1 (new 'stack 'joint-exploder-tuning (the-as uint 1))))
-      (let* ((s5-1 *target*)
-             (a0-5 (if (type? s5-1 process-focusable)
-                       s5-1
-                       )
-                   )
-             )
+      (let ((a0-5 (the-as target (as-type *target* process-focusable))))
         (when a0-5
           (set! (-> gp-1 fountain-rand-transv-lo quad) (-> (get-trans a0-5 0) quad))
           (+! (-> gp-1 fountain-rand-transv-lo y) -16384.0)
@@ -852,7 +848,8 @@
         )
       )
     (suspend)
-    (suspend-for (seconds 4))
+    (suspend-for (seconds 4)
+      )
     (cleanup-for-death self)
     )
   )
@@ -973,42 +970,8 @@
   :virtual #t
   :code (behavior ()
     (sound-play "dig-air-lifter")
-    (let ((s5-1 (vector<-cspace! (new 'stack-no-clear 'vector) (joint-node dig-jump-pad-lod0-jg main)))
-          (gp-1 (get-process *default-dead-pool* part-tracker #x4000))
-          )
-      (when gp-1
-        (let ((t9-4 (method-of-type part-tracker activate)))
-          (t9-4
-            (the-as part-tracker gp-1)
-            *entity-pool*
-            (symbol->string (-> part-tracker symbol))
-            (the-as pointer #x70004000)
-            )
-          )
-        (let ((t9-5 run-function-in-process)
-              (a0-5 gp-1)
-              (a1-4 part-tracker-init)
-              (a2-5 (-> *part-group-id-table* 1147))
-              (a3-2 0)
-              (t0-1 #f)
-              (t1-1 #f)
-              (t2-1 #f)
-              (t3-0 *launch-matrix*)
-              )
-          (set! (-> t3-0 trans quad) (-> s5-1 quad))
-          ((the-as (function object object object object object object object object none) t9-5)
-           a0-5
-           a1-4
-           a2-5
-           a3-2
-           t0-1
-           t1-1
-           t2-1
-           t3-0
-           )
-          )
-        (-> gp-1 ppointer)
-        )
+    (let ((s5-1 (vector<-cspace! (new 'stack-no-clear 'vector) (joint-node dig-jump-pad-lod0-jg main))))
+      (part-tracker-spawn :to *entity-pool* :group group-dig-jump-pad-launcher :mat-joint s5-1)
       )
     (let ((t9-6 (-> (method-of-type bouncer fire) code)))
       (if t9-6

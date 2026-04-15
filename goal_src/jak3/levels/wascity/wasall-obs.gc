@@ -18,6 +18,7 @@
 
 
 (defmethod init-from-entity! ((this wascity-airlock) (arg0 entity-actor))
+  "Set up a newly created process from the entity that created it."
   (let ((s5-0 (new 'process 'collide-shape this (collide-list-enum usually-hit-by-player))))
     (set! (-> s5-0 penetrated-by) (penetrate))
     (let ((s4-0 (new 'process 'collide-shape-prim-group s5-0 (the-as uint 2) 0)))
@@ -78,6 +79,7 @@
 
 
 (defmethod init-from-entity! ((this wascity-airlock-small) (arg0 entity-actor))
+  "Set up a newly created process from the entity that created it."
   (let ((s5-0 (new 'process 'collide-shape this (collide-list-enum usually-hit-by-player))))
     (set! (-> s5-0 penetrated-by) (penetrate))
     (let ((s4-0 (new 'process 'collide-shape-prim-group s5-0 (the-as uint 3) 0)))
@@ -180,6 +182,7 @@
   )
 
 (defmethod init-from-entity! ((this wascity-elevator-door) (arg0 entity-actor))
+  "Set up a newly created process from the entity that created it."
   (let ((s5-0 (new 'process 'collide-shape this (collide-list-enum usually-hit-by-player))))
     (set! (-> s5-0 penetrated-by) (penetrate))
     (let ((s4-0 (new 'process 'collide-shape-prim-group s5-0 (the-as uint 1) 0)))
@@ -248,7 +251,7 @@
 (defbehavior tentacle-follow-post tentacle ()
   (let ((a0-0 *target*))
     (when a0-0
-      (set! (-> self focus-pos quad) (-> (get-trans a0-0 0) quad))
+      (vector-copy! (-> self focus-pos) (get-trans a0-0 0))
       (set-vector! (-> self root trans) (-> self focus-pos x) (-> self root trans y) (-> self focus-pos z) 1.0)
       )
     )
@@ -310,9 +313,9 @@
           (set-time! (-> self active-timer))
           )
       (when (and gp-0 (time-elapsed? (-> self active-timer) (seconds 0.1)))
-        (set! (-> self root trans quad) (-> (get-trans gp-0 0) quad))
+        (vector-copy! (-> self root trans) (get-trans gp-0 0))
         (set! (-> self root trans y) (+ -114688.0 (get-base-height *ocean-map*)))
-        (set! (-> self init-pos quad) (-> self root trans quad))
+        (vector-copy! (-> self init-pos) (-> self root trans))
         (if (focus-test? gp-0 under-water)
             (go-virtual un-dive-player)
             (go-virtual attacking-0)
@@ -345,6 +348,11 @@
 (defstate attacking-0 (tentacle)
   :virtual #t
   :event tentacle-attack-handler
+  ;; og:preserve-this make sure tentacle-loop sound isn't orphaned and looping forever
+  :exit (behavior ()
+    (when (and (!= (-> self next-state name) 'attacking-1) (!= (-> self next-state name) 'kill-player))
+      (sound-stop (-> self sound-id-loop)))
+    )
   :trans (behavior ()
     (set! (-> self sound-id-attack)
           (add-process *gui-control* self (gui-channel background) (gui-action queue) "tentacle" -99.0 0)
@@ -388,7 +396,9 @@
     (sound-stop (-> self sound-id-loop))
     )
   :trans (behavior ()
-    (while (and *target* (not (logtest? (-> *target* focus-status) (focus-status dead))))
+    ;; og:preserve-this fix infinite loop when this state is entered while debug hovering
+    ; (while (and *target* (not (logtest? (-> *target* focus-status) (focus-status dead))))
+    (when (and *target* (not (focus-test? *target* dead)))
       (send-event
         *target*
         'attack-invinc
@@ -407,13 +417,13 @@
         (set-vector! gp-0 (-> s4-0 trans x) (get-base-height *ocean-map*) (-> s4-0 trans z) 1.0)
         )
       (cond
-        ((logtest? (-> *part-group-id-table* 409 flags) (sp-group-flag sp13))
-         (set! (-> *launch-matrix* trans quad) (-> gp-0 quad))
-         (part-tracker-spawn part-tracker-subsampler :to *entity-pool* :group (-> *part-group-id-table* 409))
+        ((logtest? (-> group-tentacle-attack flags) (sp-group-flag sp13))
+         (vector-copy! (-> *launch-matrix* trans) gp-0)
+         (part-tracker-spawn part-tracker-subsampler :to *entity-pool* :group group-tentacle-attack)
          )
         (else
-          (set! (-> *launch-matrix* trans quad) (-> gp-0 quad))
-          (part-tracker-spawn part-tracker :to *entity-pool* :group (-> *part-group-id-table* 409))
+          (vector-copy! (-> *launch-matrix* trans) gp-0)
+          (part-tracker-spawn part-tracker :to *entity-pool* :group group-tentacle-attack)
           )
         )
       )
@@ -447,6 +457,8 @@
     (if *target*
         (send-event *target* 'end-mode 'bot)
         )
+    ;; og:preserve-this make sure tentacle-loop sound isn't orphaned and looping forever
+    (sound-stop (-> self sound-id-loop))
     )
   :code (behavior ()
     (ja-channel-push! 1 0)
@@ -466,6 +478,7 @@
   )
 
 (defmethod init-from-entity! ((this tentacle) (arg0 entity-actor))
+  "Set up a newly created process from the entity that created it."
   (stack-size-set! (-> this main-thread) 64)
   (set! (-> this root) (new 'process 'trsqv))
   (process-drawable-from-entity! this arg0)
@@ -474,7 +487,7 @@
     (the-as skeleton-group (art-group-get-by-name *level* "skel-tentacle" (the-as (pointer level) #f)))
     (the-as pair 0)
     )
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 408) this))
+  (set! (-> this part) (create-launch-control group-tentacle-warn this))
   (set! (-> this nav-mesh) #f)
   (set! (-> this sound-id-loop) (new-sound-id))
   (set! (-> this sound-id-attack) (new-sound-id))

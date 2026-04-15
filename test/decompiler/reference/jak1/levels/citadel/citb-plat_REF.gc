@@ -464,7 +464,7 @@
 (defmethod rigid-body-platform-method-22 ((this citb-chain-plat) (arg0 vector) (arg1 float))
   (+ 12288.0
      (* 2048.0
-        (fmax 0.0 (fmin 1.0 (* 0.000024414063 (-> this float-height-offset))))
+        (fmax 0.0 (fmin 1.0 (/ (-> this float-height-offset) (meters 10))))
         (cos (* 109.22667 (+ (* 60.0 arg1) (* 0.03 (-> arg0 x)) (* 0.03 (-> arg0 z)))))
         )
      (-> this float-height-offset)
@@ -1050,7 +1050,7 @@
   (initialize-skeleton this *citb-firehose-sg* '())
   (load-params! (-> this sync) this (the-as uint 900) 0.0 0.15 0.15)
   (set! (-> this idle-distance) 286720.0)
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 685) this))
+  (set! (-> this part) (create-launch-control group-firehose-blast-smoke this))
   (clear-collide-with-as (-> this root))
   (go citb-firehose-idle)
   (none)

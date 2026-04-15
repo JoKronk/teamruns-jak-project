@@ -11,7 +11,9 @@
 
 (deftype rolling-part (part-spawner) ())
 
+
 (deftype rollingcam (process-hidden) ())
+
 
 (defskelgroup *rollingcam-sg*
   rollingcam
@@ -24,16 +26,19 @@
   ((root      collide-shape-moving :override)
    (max-frame float)))
 
+
 (deftype pusher (pusher-base)
   ((sync sync-info-paused :inline)
    (cyl  cylinder :inline))
   (:states
    pusher-idle))
 
+
 (deftype gorge-pusher (pusher-base)
   ((min-frame float))
   (:states
    gorge-pusher-idle))
+
 
 (defskelgroup *pusher-sg*
   pusher
@@ -138,6 +143,7 @@
    dark-plant-idle
    dark-plant-sprout
    dark-plant-startup))
+
 
 (defskelgroup *dark-plant-sg*
   dark-plant
@@ -285,7 +291,7 @@
 
 (defpart 2356
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x12 :page #x2))
+  ((:texture (starflash effects))
    (:num 1.0)
    (:y (meters 2))
    (:scale-x (meters 12))
@@ -302,7 +308,7 @@
 
 (defpart 1764
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 128.0)
    (:scale-x (meters 0.2) (meters 0.4))
    (:scale-y :copy scale-x)
@@ -327,7 +333,7 @@
   (set! (-> this root) (new 'process 'trsqv))
   (process-drawable-from-entity! this arg0)
   (initialize-skeleton this *dark-plant-sg* '())
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 455) this))
+  (set! (-> this part) (create-launch-control group-dark-plant this))
   (set! (-> this num-alts) (min 4 (entity-actor-count (-> this entity) 'alt-actor)))
   (dotimes (s5-3 (-> this num-alts))
     (set! (-> this alts s5-3) (entity-actor-lookup (-> this entity) 'alt-actor s5-3)))
@@ -345,6 +351,7 @@
    happy-plant-init
    happy-plant-opened
    happy-plant-opening))
+
 
 (defskelgroup *happy-plant-sg*
   happy-plant
@@ -492,6 +499,7 @@
   ((digit int8 5))
   :pack-me)
 
+
 (defun race-time-copy! ((arg0 race-time) (arg1 race-time))
   (dotimes (v1-0 5)
     (set! (-> arg0 digit v1-0) (-> arg1 digit v1-0)))
@@ -500,9 +508,9 @@
 (defun seconds->race-time ((arg0 race-time) (arg1 time-frame))
   (let* ((v1-1 (max 0 (min #x2bf1d arg1)))
          (f0-1 (* 0.0033333334 (the float v1-1))))
-    (set! (-> arg0 digit 0) (the int (* 0.016666668 f0-1)))
+    (set! (-> arg0 digit 0) (the int (/ f0-1 60)))
     (let ((f0-2 (- f0-1 (* 60.0 (the float (-> arg0 digit 0))))))
-      (set! (-> arg0 digit 1) (the int (* 0.1 f0-2)))
+      (set! (-> arg0 digit 1) (the int (/ f0-2 10)))
       (let ((f0-3 (- f0-2 (* 10.0 (the float (-> arg0 digit 1))))))
         (set! (-> arg0 digit 2) (the int f0-3))
         (let ((f0-4 (- f0-3 (the float (-> arg0 digit 2)))))
@@ -557,6 +565,7 @@
    (broken-look lod-set :inline))
   (:states (rolling-start-break symbol)
    rolling-start-whole))
+
 
 (defstate rolling-start-break (rolling-start)
   :event
@@ -614,6 +623,7 @@
    (radius    float)
    (thickness float)))
 
+
 (defbehavior gorge-init gorge ((arg0 vector) (arg1 vector) (arg2 float) (arg3 float))
   (forward-down->inv-matrix (-> self coord) arg1 (new 'static 'vector :y -1.0))
   (matrix-transpose! (-> self coord) (-> self coord))
@@ -639,14 +649,17 @@
    gorge-start-racing
    gorge-start-ready))
 
+
 (deftype gorge-finish (gorge)
   ((alt-actor entity-actor))
   (:states
    gorge-finish-idle))
 
+
 (deftype gorge-abort (gorge) ()
   (:states
    gorge-abort-idle))
+
 
 (defun gorge-behind ((arg0 gorge))
   (if (not *target*) (return #f))
@@ -714,9 +727,9 @@
 
 (defbehavior gorge-start-draw-time gorge-start ((arg0 symbol) (arg1 symbol))
   (let ((gp-0 (new 'stack 'font-context *font-default-matrix* 0 0 0.0 (font-color progress-yellow) (font-flags shadow kerning))))
-    (let ((v1-1 gp-0)) (set! (-> v1-1 width) (the float 200)))
-    (let ((v1-2 gp-0)) (set! (-> v1-2 height) (the float 50)))
-    (let ((v1-3 gp-0)) (set! (-> v1-3 scale) 0.7))
+    (set-width! gp-0 200)
+    (set-height! gp-0 50)
+    (set-scale! gp-0 0.7)
     (set! (-> gp-0 origin x) (the float (+ (-> self timer-pos-offset) 392)))
     (set! (-> gp-0 origin y) (the float (- 10 (-> self timer-pos-offset))))
     (set! (-> gp-0 flags) (font-flags shadow kerning right large))
@@ -735,7 +748,7 @@
       ((not arg0))
       ((race-time-less-than (-> self this-time) (-> self record-time))
        (when (< (mod (-> *display* real-frame-counter) 90) 60)
-         (let ((v1-18 gp-0)) (set! (-> v1-18 scale) 1.0))
+         (set-scale! gp-0 1.0)
          (set! (-> gp-0 origin x) 156.0)
          (set! (-> gp-0 origin y) 80.0)
          (set! (-> gp-0 flags) (font-flags shadow kerning middle middle-vert large))
@@ -748,7 +761,7 @@
       (else
        (if arg1 (ambient-hint-spawn "st-lose" (the-as vector #f) *entity-pool* 'stinger))
        (when (< (mod (-> *display* real-frame-counter) 90) 60)
-         (let ((v1-30 gp-0)) (set! (-> v1-30 scale) 1.0))
+         (set-scale! gp-0 1.0)
          (set! (-> gp-0 origin x) 156.0)
          (set! (-> gp-0 origin y) 80.0)
          (set! (-> gp-0 flags) (font-flags shadow kerning middle middle-vert large))
@@ -799,8 +812,8 @@
           (send-event (ppointer->process (-> *hud-parts* money)) 'enable))
         (when (< (mod (-> *display* real-frame-counter) 90) 60)
           (let ((gp-0 (new 'stack 'font-context *font-default-matrix* 156 80 0.0 (font-color red) (font-flags shadow kerning))))
-            (let ((v1-20 gp-0)) (set! (-> v1-20 width) (the float 200)))
-            (let ((v1-21 gp-0)) (set! (-> v1-21 height) (the float 50)))
+            (set-width! gp-0 200)
+            (set-height! gp-0 50)
             (set! (-> gp-0 flags) (font-flags shadow kerning middle middle-vert large))
             (print-game-text (lookup-text! *common-text* (text-id race-aborted) #f) gp-0 #f 128 22)))
         (suspend)
@@ -934,6 +947,7 @@
   (none))
 
 (deftype rolling-water (water-anim) ())
+
 
 (define ripple-for-rolling-water
   (the-as object

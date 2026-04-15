@@ -37,7 +37,7 @@
   )
 
 (defpart 2037
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 16.0)
     (:x (meters 4))
     (:y (meters 1))
@@ -98,7 +98,7 @@
   )
 
 (defpart 2039
-  :init-specs ((:texture (new 'static 'texture-id :index #xbc :page #xc))
+  :init-specs ((:texture (glow-hotdot effects))
     (:num 1.0)
     (:scale-x (meters 3) (meters 0.5))
     (:rot-x (degrees 5.625))
@@ -142,7 +142,7 @@
   )
 
 (defpart 2041
-  :init-specs ((:texture (new 'static 'texture-id :index #xbc :page #xc))
+  :init-specs ((:texture (glow-hotdot effects))
     (:num 1.0)
     (:x (meters 0) (meters 2))
     (:y (meters 1))
@@ -164,7 +164,7 @@
   )
 
 (defpart 2040
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:birth-func 'birth-func-texture-group)
     (:num 0.5)
     (:x (meters 0) (meters 4))
@@ -237,7 +237,7 @@
   )
 
 (defpart 2053
-  :init-specs ((:texture (new 'static 'texture-id :index #x2c :page #xc))
+  :init-specs ((:texture (water-ring effects))
     (:num 8.0)
     (:scale-x (meters 16))
     (:scale-y :copy scale-x)
@@ -265,7 +265,7 @@
   )
 
 (defpart 2050
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters -2.5))
     (:scale-x (meters 32))
@@ -301,7 +301,7 @@
   )
 
 (defpart 2052
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:scale-x (meters 120))
     (:rot-x (degrees 45))
@@ -336,7 +336,7 @@
   )
 
 (defpart 2048
-  :init-specs ((:texture (new 'static 'texture-id :index #x92 :page #xc))
+  :init-specs ((:texture (motion-blur-part effects))
     (:num 16.0)
     (:y (meters 0))
     (:scale-x (meters 2.5))
@@ -380,7 +380,7 @@
   )
 
 (defpart 2051
-  :init-specs ((:texture (new 'static 'texture-id :index #x34 :page #xc))
+  :init-specs ((:texture (explosion-wave effects))
     (:num 5.0)
     (:y (meters -2.5))
     (:scale-x (meters 6) (meters 8))
@@ -433,7 +433,7 @@
   )
 
 (defpart 2049
-  :init-specs ((:texture (new 'static 'texture-id :index #x33 :page #xc))
+  :init-specs ((:texture (explosion-nebula effects))
     (:birth-func 'birth-func-texture-group)
     (:num 16.0 10.0)
     (:y (meters -2.5))
@@ -497,7 +497,7 @@
   )
 
 (defpart 2047
-  :init-specs ((:texture (new 'static 'texture-id :index #x32 :page #xc))
+  :init-specs ((:texture (specs effects))
     (:num 16.0 4.0)
     (:x (meters 0.25))
     (:y (meters -2.5))
@@ -544,7 +544,7 @@
   )
 
 (defpart 2045
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 12.0 8.0)
     (:y (meters -2.5))
     (:scale-x (meters 16.5) (meters 16))
@@ -597,7 +597,7 @@
   )
 
 (defpart 2046
-  :init-specs ((:texture (new 'static 'texture-id :index #x31 :page #xc))
+  :init-specs ((:texture (flamingstick effects))
     (:num 8.0)
     (:y (meters -2.5))
     (:scale-x (meters 16) (meters 16))
@@ -905,11 +905,11 @@
   (set! (-> self error-y-angle) 0.0)
   (set! (-> self error-y-angle-dest) 0.0)
   (set! (-> self hit-count) 0)
-  (process-spawn part-tracker :init part-tracker-init (-> *part-group-id-table* 461) -1 #f #f self 4 :to self)
-  (process-spawn part-tracker :init part-tracker-init (-> *part-group-id-table* 462) -1 #f #f self 5 :to self)
-  (process-spawn part-tracker :init part-tracker-init (-> *part-group-id-table* 463) -1 #f #f self 6 :to self)
-  (process-spawn part-tracker :init part-tracker-init (-> *part-group-id-table* 464) -1 #f #f self 7 :to self)
-  (process-spawn part-tracker :init part-tracker-init (-> *part-group-id-table* 465) -1 #f #f self 8 :to self)
+  (process-spawn part-tracker :init part-tracker-init group-barons-ship-light1 -1 #f #f self 4 :to self)
+  (process-spawn part-tracker :init part-tracker-init group-barons-ship-light2 -1 #f #f self 5 :to self)
+  (process-spawn part-tracker :init part-tracker-init group-barons-ship-light3 -1 #f #f self 6 :to self)
+  (process-spawn part-tracker :init part-tracker-init group-barons-ship-light4 -1 #f #f self 7 :to self)
+  (process-spawn part-tracker :init part-tracker-init group-barons-ship-light5 -1 #f #f self 8 :to self)
   (cond
     ((= (-> self info mesh) 1)
      (initialize-skeleton
@@ -966,33 +966,33 @@
   (none)
   )
 
-(defmethod relocate ((this drill-barons-ship-turret) (arg0 int))
+(defmethod relocate ((this drill-barons-ship-turret) (offset int))
   (when (-> this jmod)
     (if (nonzero? (-> this jmod))
-        (&+! (-> this jmod) arg0)
+        (&+! (-> this jmod) offset)
         )
     )
   (when (-> this jmod-left)
     (if (nonzero? (-> this jmod-left))
-        (&+! (-> this jmod-left) arg0)
+        (&+! (-> this jmod-left) offset)
         )
     )
   (when (-> this jmod-right)
     (if (nonzero? (-> this jmod-right))
-        (&+! (-> this jmod-right) arg0)
+        (&+! (-> this jmod-right) offset)
         )
     )
-  (call-parent-method this arg0)
+  (call-parent-method this offset)
   )
 
 ;; WARN: Return type mismatch object vs none.
 (defmethod init-from-entity! ((this drill-barons-ship) (arg0 entity-actor))
   "Typically the method that does the initial setup on the process, potentially using the [[entity-actor]] provided as part of that.
-This commonly includes things such as:
-- stack size
-- collision information
-- loading the skeleton group / bones
-- sounds"
+   This commonly includes things such as:
+   - stack size
+   - collision information
+   - loading the skeleton group / bones
+   - sounds"
   (let ((s4-0 (new 'process 'collide-shape this (collide-list-enum usually-hit-by-player))))
     (let ((s3-0 (new 'process 'collide-shape-prim-group s4-0 (the-as uint 1) 0)))
       (set! (-> s4-0 total-prims) (the-as uint 2))
@@ -1219,7 +1219,7 @@ This commonly includes things such as:
             (* (-> self inc-y) (-> self clock time-adjust-ratio))
             (-> self ease-y)
             (-> self ease-y)
-            (* 0.05 (-> self clock time-adjust-ratio) (-> self inc-y))
+            (* (/ (-> self clock time-adjust-ratio) 20) (-> self inc-y))
             )
           )
     (set! (-> self root trans y)
@@ -1300,8 +1300,8 @@ This commonly includes things such as:
                    (else
                      (set! (-> self from-y) (-> self current-y-position))
                      (let ((f0-6 (fabs (- (+ f30-0 (-> v1-35 ship-y-offset)) (-> self from-y)))))
-                       (set! (-> self inc-y) (* 0.02 f0-6))
-                       (set! (-> self ease-y) (* 0.2 f0-6))
+                       (set! (-> self inc-y) (/ f0-6 50))
+                       (set! (-> self ease-y) (/ f0-6 5))
                        )
                      )
                    )
@@ -1318,7 +1318,7 @@ This commonly includes things such as:
                     (* (-> self inc-y) (-> self clock time-adjust-ratio))
                     (-> self ease-y)
                     (-> self ease-y)
-                    (* 0.05 (-> self clock time-adjust-ratio) (-> self inc-y))
+                    (* (/ (-> self clock time-adjust-ratio) 20) (-> self inc-y))
                     )
                   )
             (if (and (= (-> self current-y-position) f28-0) (-> s5-0 alive))
@@ -1371,7 +1371,7 @@ This commonly includes things such as:
                 0.0
                 (* 5.0 (-> pp clock time-adjust-ratio))
                 90.0
-                (* 0.1 (-> pp clock time-adjust-ratio))
+                (/ (-> pp clock time-adjust-ratio) 10)
                 )
               )
         )
@@ -1492,92 +1492,22 @@ This commonly includes things such as:
   :enter (behavior ()
     (cond
       ((>= (-> (the-as drill-barons-ship (-> self parent 0)) pass) 2)
-       (when (zero? (-> self info mesh))
-         (let ((gp-0 (get-process *default-dead-pool* part-tracker #x4000)))
-           (when gp-0
-             (let ((t9-1 (method-of-type part-tracker activate)))
-               (t9-1
-                 (the-as part-tracker gp-0)
-                 *entity-pool*
-                 (symbol->string (-> part-tracker symbol))
-                 (the-as pointer #x70004000)
-                 )
-               )
-             (let ((t9-2 run-function-in-process)
-                   (a0-2 gp-0)
-                   (a1-2 part-tracker-init)
-                   (a2-4 (-> *part-group-id-table* 469))
-                   (a3-1 0)
-                   (t0-0 #f)
-                   (t1-0 #f)
-                   (t2-0 #f)
-                   (t3-0 *launch-matrix*)
-                   )
-               (set! (-> t3-0 trans quad) (-> self root trans quad))
-               ((the-as (function object object object object object object object object none) t9-2)
-                a0-2
-                a1-2
-                a2-4
-                a3-1
-                t0-0
-                t1-0
-                t2-0
-                t3-0
-                )
-               )
-             (-> gp-0 ppointer)
+       (if (zero? (-> self info mesh))
+           (part-tracker-spawn
+             :to *entity-pool*
+             :group group-drill-barons-ship-explosion
+             :mat-joint (-> self root trans)
              )
            )
-         )
        )
       ((zero? (-> self info mesh))
-       (process-spawn
-         part-tracker
-         :init part-tracker-init
-         (-> *part-group-id-table* 466)
-         0
-         #f
-         #f
-         self
-         3
-         :to *entity-pool*
-         )
+       (process-spawn part-tracker :init part-tracker-init group-turret-smoke-trail 0 #f #f self 3 :to *entity-pool*)
        )
       (else
-        (let ((gp-2 (get-process *default-dead-pool* part-tracker #x4000)))
-          (when gp-2
-            (let ((t9-7 (method-of-type part-tracker activate)))
-              (t9-7
-                (the-as part-tracker gp-2)
-                *entity-pool*
-                (symbol->string (-> part-tracker symbol))
-                (the-as pointer #x70004000)
-                )
-              )
-            (let ((t9-8 run-function-in-process)
-                  (a0-8 gp-2)
-                  (a1-8 part-tracker-init)
-                  (a2-14 (-> *part-group-id-table* 469))
-                  (a3-5 0)
-                  (t0-2 #f)
-                  (t1-2 #f)
-                  (t2-2 #f)
-                  (t3-2 *launch-matrix*)
-                  )
-              (set! (-> t3-2 trans quad) (-> self root trans quad))
-              ((the-as (function object object object object object object object object none) t9-8)
-               a0-8
-               a1-8
-               a2-14
-               a3-5
-               t0-2
-               t1-2
-               t2-2
-               t3-2
-               )
-              )
-            (-> gp-2 ppointer)
-            )
+        (part-tracker-spawn
+          :to *entity-pool*
+          :group group-drill-barons-ship-explosion
+          :mat-joint (-> self root trans)
           )
         )
       )
@@ -1607,12 +1537,7 @@ This commonly includes things such as:
   )
 
 (defun calculate-ship-projectile-velocity ((arg0 projectile-init-by-other-params) (arg1 float))
-  (let* ((s4-0 *target*)
-         (a0-2 (if (type? s4-0 process-focusable)
-                   s4-0
-                   )
-               )
-         )
+  (let ((a0-2 (the-as target (as-type *target* process-focusable))))
     (cond
       (a0-2
         (let ((a0-3 (get-trans a0-2 0)))
@@ -1654,55 +1579,21 @@ This commonly includes things such as:
              (let ((gp-1 (new 'stack-no-clear 'vector)))
                (set! (-> gp-1 quad) (-> self root trans quad))
                (+! (-> gp-1 z) 81920.0)
-               (let ((s5-1 (get-process *default-dead-pool* part-tracker #x4000)))
-                 (when s5-1
-                   (let ((t9-3 (method-of-type part-tracker activate)))
-                     (t9-3
-                       (the-as part-tracker s5-1)
-                       *entity-pool*
-                       (symbol->string (-> part-tracker symbol))
-                       (the-as pointer #x70004000)
-                       )
-                     )
-                   (let ((t9-4 run-function-in-process)
-                         (a0-7 s5-1)
-                         (a1-4 part-tracker-init)
-                         (a2-6 (-> *part-group-id-table* 469))
-                         (a3-3 0)
-                         (t0-1 #f)
-                         (t1-1 #f)
-                         (t2-1 #f)
-                         (t3-0 *launch-matrix*)
-                         )
-                     (set! (-> t3-0 trans quad) (-> gp-1 quad))
-                     ((the-as (function object object object object object object object object none) t9-4)
-                      a0-7
-                      a1-4
-                      a2-6
-                      a3-3
-                      t0-1
-                      t1-1
-                      t2-1
-                      t3-0
-                      )
-                     )
-                   (-> s5-1 ppointer)
-                   )
-                 )
+               (part-tracker-spawn :to *entity-pool* :group group-drill-barons-ship-explosion :mat-joint gp-1)
                )
              (sound-play "shp-turret-xplo")
              (cond
                ((= (-> self info mesh) 1)
                 (setup-masks (-> self draw) 0 1)
-                (process-spawn part-tracker :init part-tracker-init (-> *part-group-id-table* 468) 0 #f #f self 3 :to self)
+                (process-spawn part-tracker :init part-tracker-init group-turret-smoke-trail-side 0 #f #f self 3 :to self)
                 )
                ((= (-> self info mesh) 2)
                 (setup-masks (-> self draw) 0 1)
-                (process-spawn part-tracker :init part-tracker-init (-> *part-group-id-table* 467) 0 #f #f self 3 :to self)
+                (process-spawn part-tracker :init part-tracker-init group-turret-smoke-trail-down 0 #f #f self 3 :to self)
                 )
                (else
                  (setup-masks (-> self draw) 0 1)
-                 (process-spawn part-tracker :init part-tracker-init (-> *part-group-id-table* 466) 0 #f #f self 3 :to self)
+                 (process-spawn part-tracker :init part-tracker-init group-turret-smoke-trail 0 #f #f self 3 :to self)
                  )
                )
              (sound-play "ship-veer")
@@ -1732,7 +1623,7 @@ This commonly includes things such as:
        (process-spawn
          part-tracker
          :init part-tracker-init
-         (-> *part-group-id-table* 460)
+         group-turret-warning-side
          0
          #f
          #f
@@ -1745,7 +1636,7 @@ This commonly includes things such as:
        (process-spawn
          part-tracker
          :init part-tracker-init
-         (-> *part-group-id-table* 459)
+         group-turret-warning-down
          0
          #f
          #f
@@ -1755,17 +1646,7 @@ This commonly includes things such as:
          )
        )
       (else
-        (process-spawn
-          part-tracker
-          :init part-tracker-init
-          (-> *part-group-id-table* 458)
-          0
-          #f
-          #f
-          self
-          3
-          :to *entity-pool*
-          )
+        (process-spawn part-tracker :init part-tracker-init group-turret-warning 0 #f #f self 3 :to *entity-pool*)
         )
       )
     (if (zero? (-> self info mesh))
@@ -1806,7 +1687,7 @@ This commonly includes things such as:
         )
       )
     (until #f
-      (seek! (-> self anim-frame) 1.0 (* 0.01 (-> self clock time-adjust-ratio)))
+      (seek! (-> self anim-frame) 1.0 (/ (-> self clock time-adjust-ratio) 100))
       (let ((v1-12 (-> self skel root-channel 0)))
         (set! (-> v1-12 num-func) num-func-identity)
         (let ((f0-4 (-> self anim-frame))
@@ -1945,7 +1826,7 @@ This commonly includes things such as:
     )
   :code (behavior ()
     (until #f
-      (seek! (-> self anim-frame) 0.0 (* 0.01 (-> self clock time-adjust-ratio)))
+      (seek! (-> self anim-frame) 0.0 (/ (-> self clock time-adjust-ratio) 100))
       (let ((v1-4 (-> self skel root-channel 0)))
         (set! (-> v1-4 num-func) num-func-identity)
         (let ((f0-4 (-> self anim-frame))

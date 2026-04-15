@@ -21,6 +21,7 @@
    ram-boss-proj-growing
    ram-boss-proj-launch))
 
+
 (deftype ram-boss (nav-enemy)
   ((parent-override          (pointer ram) :overlay-at parent)
    (facing-y                 float)
@@ -53,6 +54,7 @@
    ram-boss-throw
    ram-boss-tracking
    ram-boss-up-defend-block))
+
 
 (defskelgroup *ram-boss-sg*
   ram-boss
@@ -176,7 +178,7 @@
 
 (defpart 2487
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x12 :page #x2))
+  ((:texture (starflash effects))
    (:num 1.0)
    (:scale-x (meters 1.5) (meters 1))
    (:rot-z (degrees 0) (degrees 360))
@@ -194,7 +196,7 @@
 
 (defpart 1904
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 1.0 2.0)
    (:scale-x (meters 0.3) (meters 0.1))
    (:scale-y :copy scale-x)
@@ -215,7 +217,7 @@
 
 (defpart 1905
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x4 :page #x2))
+  ((:texture (middot effects))
    (:num 4.0)
    (:scale-x (meters 0.5) (meters 0.25))
    (:rot-z (degrees 0) (degrees 360))
@@ -287,7 +289,7 @@
 
 (defpart 1910
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x12 :page #x2))
+  ((:texture (starflash effects))
    (:num 1.0)
    (:scale-x (meters 0.01))
    (:scale-y :copy scale-x)
@@ -298,7 +300,7 @@
 
 (defpart 1908
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 1.0)
    (:scale-x (meters 1))
    (:rot-z (degrees 0) (degrees 360))
@@ -325,7 +327,7 @@
 
 (defpart 1909
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 1.0 5.0)
    (:scale-x (meters 0.2) (meters 0.1))
    (:rot-z (degrees 0) (degrees 360))
@@ -359,7 +361,7 @@
 
 (defpart 1914
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 64.0)
    (:scale-x (meters 0.5) (meters 0.2))
    (:scale-y :copy scale-x)
@@ -383,7 +385,7 @@
 
 (defpart 1916
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 6.0)
    (:scale-x (meters 3) (meters 3))
    (:rot-z (degrees 0) (degrees 360))
@@ -406,7 +408,7 @@
 
 (defpart 1915
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x12 :page #x2))
+  ((:texture (starflash effects))
    (:num 1.0)
    (:scale-x (meters 6) (meters 1))
    (:rot-z (degrees 0) (degrees 360))
@@ -438,7 +440,7 @@
                                    (the-as process-drawable #f)
                                    0.0
                                    81920.0))
-    (if (-> this launched?) (spawn (-> this part2) (the-as vector (-> this root root-prim prim-core))))
+    (if (-> this launched?) (spawn (-> this part2) (-> this root root-prim prim-core world-sphere)))
     (let ((s5-0 (the-as sound-rpc-set-param (get-sound-buffer-entry))))
       (set! (-> s5-0 command) (sound-command set-param))
       (set! (-> s5-0 id) (-> this sound-id))
@@ -495,8 +497,8 @@
 
 (defmethod projectile-method-27 ((this ram-boss-proj) (handle-from handle))
   (set! (-> this charge-sound-id) (new 'static 'sound-id))
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 521) this))
-  (set! (-> this part2) (create-launch-control (-> *part-group-id-table* 522) this))
+  (set! (-> this part) (create-launch-control group-ram-boss-proj-grow this))
+  (set! (-> this part2) (create-launch-control group-ram-boss-proj-fly this))
   (set! (-> this launched?) #f)
   (set! (-> this growth) 0.0)
   (set! (-> this max-speed) 40960.0)
@@ -517,9 +519,9 @@
   ((method-of-type projectile deactivate) this)
   (none))
 
-(defmethod relocate ((this ram-boss-proj) (arg0 int))
-  (if (nonzero? (-> this part2)) (&+! (-> this part2) arg0))
-  (the-as ram-boss-proj ((method-of-type projectile relocate) this arg0)))
+(defmethod relocate ((this ram-boss-proj) (offset int))
+  (if (nonzero? (-> this part2)) (&+! (-> this part2) offset))
+  (the-as ram-boss-proj ((method-of-type projectile relocate) this offset)))
 
 (defmethod projectile-method-28 ((this ram-boss-proj))
   (when (and *target*
@@ -594,7 +596,7 @@
       (process-spawn part-tracker
                      :init
                      part-tracker-init
-                     (-> *part-group-id-table* 523)
+                     group-ram-boss-proj-hit
                      -1
                      #f
                      #f
@@ -614,7 +616,7 @@
       (process-spawn part-tracker
                      :init
                      part-tracker-init
-                     (-> *part-group-id-table* 524)
+                     group-ram-boss-proj-die
                      -1
                      #f
                      #f
@@ -634,7 +636,7 @@
 
 (defpart 1919
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 2.0)
    (:x (meters -0.25) (meters 0.5))
    (:z (meters -0.25) (meters 0.5))
@@ -664,7 +666,7 @@
 
 (defpart 2367
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 16.0)
    (:scale-x (meters 1) (meters 1))
    (:rot-z (degrees 0) (degrees 360))
@@ -687,7 +689,7 @@
 
 (defpart 2368
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 12.0)
    (:scale-x (meters 0.5) (meters 0.25))
    (:rot-z (degrees 0) (degrees 360))
@@ -710,7 +712,7 @@
 
 (defpart 2369
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x4 :page #x2))
+  ((:texture (middot effects))
    (:num 32.0)
    (:x (meters -0.4) (meters 0.8))
    (:y (meters -0.1) (meters 0.4))
@@ -804,10 +806,10 @@
   ((method-of-type nav-enemy deactivate) this)
   (none))
 
-(defmethod relocate ((this ram-boss) (arg0 int))
-  (if (nonzero? (-> this shield-jmod)) (&+! (-> this shield-jmod) arg0))
-  (if (nonzero? (-> this part2)) (&+! (-> this part2) arg0))
-  (the-as ram-boss ((method-of-type nav-enemy relocate) this arg0)))
+(defmethod relocate ((this ram-boss) (offset int))
+  (if (nonzero? (-> this shield-jmod)) (&+! (-> this shield-jmod) offset))
+  (if (nonzero? (-> this part2)) (&+! (-> this part2) offset))
+  (the-as ram-boss ((method-of-type nav-enemy relocate) this offset)))
 
 (defmethod initialize-collision ((this ram-boss))
   (let ((s5-0 (new 'process 'collide-shape-moving this (collide-list-enum hit-by-player))))
@@ -887,8 +889,8 @@
   (set! (-> this draw origin-joint-index) (the-as uint 3))
   (init-defaults! this *ram-boss-nav-enemy-info*)
   (logclear! (-> this enemy-info options) (fact-options has-power-cell))
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 525) this))
-  (set! (-> this part2) (create-launch-control (-> *part-group-id-table* 574) this))
+  (set! (-> this part) (create-launch-control group-ram-boss-shield-on-fire this))
+  (set! (-> this part2) (create-launch-control group-ram-boss-foot-puff this))
   (set! (-> this shield-jmod) (new 'process 'joint-mod-set-local this 32 #f #f #t))
   (set! (-> this shield-jmod enable) #f)
   (set! (-> this has-shield?) #t)
@@ -1019,7 +1021,7 @@
         (when *target*
           (if *target*
             (look-at-enemy! (-> *target* neck)
-                            (the-as vector (-> (the-as collide-shape-prim-group (-> self collide-info root-prim)) prims 0 prim-core))
+                            (-> (the-as collide-shape-prim-group (-> self collide-info root-prim)) prims 0 prim-core world-sphere)
                             'attacking
                             self)))
         (suspend))))

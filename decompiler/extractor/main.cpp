@@ -33,6 +33,7 @@ IsoFile extract_files(fs::path input_file_path, fs::path extracted_iso_path) {
 }
 
 std::tuple<std::optional<ISOMetadata>, ExtractorErrorCode> validate(
+    const std::string& game_name,
     const fs::path& extracted_iso_path,
     const uint64_t expected_hash,
     const int expected_num_files) {
@@ -79,6 +80,13 @@ std::tuple<std::optional<ISOMetadata>, ExtractorErrorCode> validate(
   lg::info("\tSerial - {}", dbEntry->first);
   lg::info("\tUses Decompiler Config Version - {}", version_info.decomp_config_version);
 
+  // Make sure the game provided matches the expected game (game arg must be provided for jak 2/3)
+  if (version_info.game_name != game_name) {
+    lg::error("Serial '{}' is for {}, expecting an ISO for {}", serial.value(),
+              version_info.game_name, game_name);
+    return {std::nullopt, ExtractorErrorCode::VALIDATION_SERIAL_MISSING_FROM_DB};
+  }
+
   // - Number of Files
   if (version_info.num_files != expected_num_files) {
     lg::error("Extracted an unexpected number of files. Expected '{}', Actual '{}'",
@@ -93,7 +101,8 @@ std::tuple<std::optional<ISOMetadata>, ExtractorErrorCode> validate(
     }
     lg::error("Overall ISO content's hash does not match. Expected '{}', Actual '{}'", all_expected,
               expected_hash);
-    return {std::nullopt, ExtractorErrorCode::VALIDATION_FILE_CONTENTS_UNEXPECTED};
+    return {std::make_optional(version_info),
+            ExtractorErrorCode::VALIDATION_FILE_CONTENTS_UNEXPECTED};
   }
 
   return {
@@ -129,7 +138,7 @@ ExtractorErrorCode compile(const fs::path& iso_data_path, const std::string& dat
   // Determine which config to use from the database
   const auto version_info = get_version_info_or_default(iso_data_path);
 
-  Compiler compiler(game_name_to_version(version_info.game_name));
+  Compiler compiler(game_name_to_version(version_info.game_name), emitter::InstructionSet::X86);
   compiler.make_system().set_constant("*iso-data*", absolute(iso_data_path).string());
   compiler.make_system().set_constant("*use-iso-data-path*", true);
   file_util::set_iso_data_dir(absolute(iso_data_path));
@@ -226,7 +235,7 @@ int main(int argc, char** argv) {
   if (!project_path_override.empty()) {
     if (!fs::exists(project_path_override)) {
       lg::error("Error: project path override '{}' does not exist", project_path_override.string());
-      return static_cast<int>(ExtractorErrorCode::INVALID_CLI_INPUT);
+      return static_cast<int>(ExtractorErrorCode::INVALID_CLI_INPUT_MISSING_FOLDER);
     }
     auto ok = file_util::setup_project_path(project_path_override);
     if (!ok) {
@@ -256,7 +265,7 @@ int main(int argc, char** argv) {
   // - INPUT VALIDATION
   if (!fs::exists(input_file_path)) {
     lg::error("Error: input game file path '{}' does not exist", input_file_path.string());
-    return static_cast<int>(ExtractorErrorCode::INVALID_CLI_INPUT);
+    return static_cast<int>(ExtractorErrorCode::INVALID_CLI_INPUT_MISSING_FOLDER);
   }
   if (data_subfolders.count(game_name) == 0) {
     lg::error("Error: input game name '{}' is not valid", game_name);
@@ -290,7 +299,7 @@ int main(int argc, char** argv) {
       const auto [hash, file_count] = calculate_extraction_hash(iso_file);
       // Validate the result to determine the release
       const auto [version_info, validate_code] =
-          validate(temp_iso_extract_location, hash, file_count);
+          validate(game_name, temp_iso_extract_location, hash, file_count);
       if (validate_code == ExtractorErrorCode::VALIDATION_BAD_EXTRACTION ||
           (flag_fail_on_validation && validate_code != ExtractorErrorCode::SUCCESS)) {
         return static_cast<int>(validate_code);
@@ -303,6 +312,7 @@ int main(int argc, char** argv) {
         // We know the version since we just extracted it, so the user didn't need to provide this
         // explicitly
         data_subfolder = data_subfolders.at(version_info->game_name);
+        game_name = version_info->game_name;
         if (!extraction_path.empty()) {
           iso_data_path = extraction_path / data_subfolder;
         } else {
@@ -326,17 +336,21 @@ int main(int argc, char** argv) {
     } else if (fs::is_directory(input_file_path)) {
       if (!flag_folder) {
         // if we didn't request a folder explicitly, but we got one, assume something went wrong.
-        lg::error("got a folder, but didn't get folder flag");
+        lg::error("got a folder, but didn't provide the folder flag");
         return static_cast<int>(ExtractorErrorCode::INVALID_CLI_INPUT);
       }
       iso_data_path = input_file_path;
       // Get hash and file count
       const auto [hash, file_count] = calculate_extraction_hash(iso_data_path);
       // Validate
-      auto [version_info, validate_code] = validate(iso_data_path, hash, file_count);
+      auto [version_info, validate_code] = validate(game_name, iso_data_path, hash, file_count);
       if (validate_code == ExtractorErrorCode::VALIDATION_BAD_EXTRACTION ||
           (flag_fail_on_validation && validate_code != ExtractorErrorCode::SUCCESS)) {
         return static_cast<int>(validate_code);
+      }
+      if (version_info) {
+        data_subfolder = data_subfolders.at(version_info->game_name);
+        game_name = version_info->game_name;
       }
     }
 

@@ -24,7 +24,7 @@
   )
 
 (defpart 3052
-  :init-specs ((:texture (new 'static 'texture-id :index #x34 :page #xc))
+  :init-specs ((:texture (explosion-wave effects))
     (:num 1.0 1.0)
     (:scale-x (meters 1) (meters 1))
     (:rot-z (degrees 0) (degrees 360) :store)
@@ -51,7 +51,7 @@
   )
 
 (defpart 3054
-  :init-specs ((:texture (new 'static 'texture-id :index #x33 :page #xc))
+  :init-specs ((:texture (explosion-nebula effects))
     (:num 1.0 1.0)
     (:scale-x (meters 1) (meters 1))
     (:rot-z (degrees 0))
@@ -109,7 +109,7 @@
   )
 
 (defpart 3053
-  :init-specs ((:texture (new 'static 'texture-id :index #x47 :page #xc))
+  :init-specs ((:texture (bigstarflash effects))
     (:num 1.0)
     (:scale-x (meters 5))
     (:scale-y :copy scale-x)
@@ -142,7 +142,7 @@
   )
 
 (defpart 3051
-  :init-specs ((:texture (new 'static 'texture-id :index #x32 :page #xc))
+  :init-specs ((:texture (specs effects))
     (:num 5.0 3.0)
     (:x (meters 0.25))
     (:scale-x (meters 1) (meters 0.25))
@@ -185,7 +185,7 @@
   )
 
 (defpart 3049
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 3.0 1.0)
     (:x (meters 0) (meters 0.6))
     (:scale-x (meters 2) (meters 1.5))
@@ -236,7 +236,7 @@
   )
 
 (defpart 3050
-  :init-specs ((:texture (new 'static 'texture-id :index #x31 :page #xc))
+  :init-specs ((:texture (flamingstick effects))
     (:num 4.0 2.0)
     (:scale-x (meters 0.1) (meters 0.25))
     (:rot-x 4)
@@ -256,7 +256,7 @@
   )
 
 (defpart 3064
-  :init-specs ((:texture (new 'static 'texture-id :index #x9b :page #xb))
+  :init-specs ((:texture (common-white common))
     (:birth-func 'birth-func-laser-pointer)
     (:num 1.0)
     (:scale-x (meters 0.075) (meters 0.05))
@@ -271,7 +271,7 @@
   )
 
 (defpart 3065
-  :init-specs ((:texture (new 'static 'texture-id :index #xbc :page #xc))
+  :init-specs ((:texture (glow-hotdot effects))
     (:num 1.0)
     (:scale-x (meters 0.2) (meters 0.15))
     (:rot-x (degrees 1.125))
@@ -288,7 +288,7 @@
   )
 
 (defpart 3066
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 0.5) (meters 0.25))
     (:rot-x (degrees 1.125))
@@ -305,7 +305,7 @@
   )
 
 (defpart 3067
-  :init-specs ((:texture (new 'static 'texture-id :index #xbc :page #xc))
+  :init-specs ((:texture (glow-hotdot effects))
     (:num 1.0)
     (:scale-x (meters 0.2) (meters 0.025))
     (:scale-y :copy scale-x)
@@ -620,12 +620,7 @@
           ((>= f30-0 0.0)
            (set! (-> this beam-intersect) (the-as basic 'wall))
            (when (-> s3-0 best-other-tri collide-ptr)
-             (let* ((s3-1 (-> s3-0 best-other-tri collide-ptr))
-                    (a0-14 (if (type? s3-1 collide-shape-prim)
-                               (the-as collide-shape-prim s3-1)
-                               )
-                           )
-                    )
+             (let ((a0-14 (as-type (-> s3-0 best-other-tri collide-ptr) collide-shape-prim)))
                (when a0-14
                  (when (= (-> a0-14 cshape process type) target)
                    (set! (-> this target-timeout) (the-as uint (current-time)))
@@ -732,7 +727,8 @@
       (suspend)
       (ja :num! (seek!))
       )
-    (suspend-for (seconds 0.5))
+    (suspend-for (seconds 0.5)
+      )
     (until #f
       (let ((gp-2 7))
         (sound-play "gturret")
@@ -749,7 +745,8 @@
             (suspend)
             (ja :num! (seek!))
             )
-          (suspend-for (seconds 0.33))
+          (suspend-for (seconds 0.33)
+            )
           (if (= gp-2 7)
               (set! gp-2 8)
               (set! gp-2 9)
@@ -757,7 +754,8 @@
           )
         )
       (set! (-> self flash-state) #f)
-      (suspend-for (seconds 1.5))
+      (suspend-for (seconds 1.5)
+        )
       )
     #f
     )
@@ -905,7 +903,11 @@
     (suspend)
     (ja-channel-set! 0)
     (let ((gp-2 (vector<-cspace! (new 'stack-no-clear 'vector) (joint-node fort-turret-lod0-jg headrotate))))
-      (suspend-for (seconds 2) (spawn (-> self part) gp-2))
+      (suspend-for (seconds 2)
+        (spawn (-> self part) gp-2)
+        )
+      )
+    (suspend-for (seconds 1)
       )
     (suspend-for (seconds 1))
     (send-event self 'death-end)
@@ -1014,7 +1016,7 @@
       )
   (logclear! (-> this mask) (process-mask actor-pause))
   (logclear! (-> this enemy-flags) (enemy-flag actor-pause-backup))
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 685) this))
+  (set! (-> this part) (create-launch-control group-fort-turret-hit this))
   (set! (-> this gun-tilt-jm) (new 'process 'joint-mod (joint-mod-mode joint-set*) this 4))
   (set! (-> this gun-shadow-jm) (the-as joint-mod (new 'process 'joint-mod-set-local this 10 #f #f #t)))
   (set! (-> this gun-shadow-jm twist-min-y) (the-as float #t))

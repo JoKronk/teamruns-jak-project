@@ -2,6 +2,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(jak)
 include(CTest)
 
@@ -31,6 +32,18 @@ if (EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json" )
         "${PROJECT_SOURCE_DIR}/build/compile_commands.json")
 endif()
 
+# NOTE - for SDL, i think SDL3 regressed this - https://github.com/libsdl-org/SDL/pull/6455
+# a more recent issue - https://github.com/libsdl-org/SDL/issues/12078
+if (APPLE)
+  enable_language(OBJC)
+  execute_process(
+    COMMAND xcrun --show-sdk-path
+        OUTPUT_VARIABLE MACOSX_SYSROOT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    # Tell CMake to use it
+    set(CMAKE_OSX_SYSROOT "${MACOSX_SYSROOT}" CACHE PATH "macOS SDK path" FORCE)
+endif()
 
 # Setup compiler flags
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
@@ -44,6 +57,10 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         -Wall \
         -Wno-c++11-narrowing \
         -Wno-c++98-compat \
+        -Wno-deprecated-this-capture \
+        -Wno-missing-field-initializers \
+        -Wno-sign-compare \
+        -Wno-ignored-qualifiers \
         -O3 \
         -D_CRT_SECURE_NO_WARNINGS")
 
@@ -53,7 +70,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         # Note: this is only _reserved_ memory, not necessarily _committed_ memory
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LDFLAGS} -Xlinker /STACK:16000000")
     else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -g -Wextra")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -g")
     endif()
 
     # additional c++ and linker flags for release mode for our projects
@@ -117,11 +134,12 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
         -Wsign-promo \
         -fdiagnostics-color=always"
         )
-    
-    # pin to AVX for macOS, hopefully all macOS runners have atleast this architecture
-    # technically speaking, SSE4 is the cutoff for Apple Silicon so...only a matter of time!
-    if(NOT CMAKE_CXX_COMPILER_TARGET STREQUAL "arm64-apple-darwin")
+
+    # TODO - make a proper flag for arm compiling
+    if (CMAKE_APPLE_SILICON_PROCESSOR STREQUAL "x86_64")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mcrc")
     endif()
 
     # additional c++ flags for release mode for our projects
@@ -171,15 +189,14 @@ endif()
 
 function(build_third_party_lib dir_name target_name)
     add_subdirectory(third-party/${dir_name} EXCLUDE_FROM_ALL)
-    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-        # For Microsoft Visual C++ Compiler (MSVC)
-        target_compile_options(${target_name} PRIVATE /w)
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        # For GNU Compiler Collection (GCC) or Clang
-        target_compile_options(${target_name} PRIVATE -w)
+    # Convert all public include dirs to SYSTEM
+    get_target_property(INCLUDES ${target_name} INTERFACE_INCLUDE_DIRECTORIES)
+    if(INCLUDES)
+        set_target_properties(${target_name} PROPERTIES
+            INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${INCLUDES}"
+        )
     endif()
 endfunction()
-
 
 # Dependencies and Libraries
 # includes relative to top level jak-project folder
@@ -193,6 +210,9 @@ include_directories(SYSTEM third-party/inja)
 # TODO - probably integrate with ZSTD since we have it already
 set(CURL_USE_LIBSSH2 OFF)
 set(CURL_ZLIB OFF)
+# suddenly became enabled on macOS atleast, only needed for unicode URLs
+# wasn't being properly statically linked
+set(USE_LIBIDN2 OFF)
 if(WIN32)
     set(CURL_USE_SCHANNEL ON) # native Windows SSL support
 elseif(APPLE)
@@ -257,9 +277,9 @@ include_directories(third-party/websocketpp)
 # build SDL
 include(SDLOptions)
 if(STATICALLY_LINK)
-    build_third_party_lib(SDL SDL2-static)
+    build_third_party_lib(SDL SDL3-static)
 else()
-    build_third_party_lib(SDL SDL2)
+    build_third_party_lib(SDL SDL3-shared)
 endif()
 
 # build imgui
@@ -291,6 +311,10 @@ include(test/CMakeLists.txt)
 build_third_party_lib(lzokay lzokay)
 
 build_third_party_lib(stb_image stb_image)
+# build draco library for tinygltf compression support
+include_directories(third-party/draco/src)
+add_subdirectory(third-party/draco)
+add_compile_definitions(TINYGLTF_ENABLE_DRACO)
 build_third_party_lib(tiny_gltf tiny_gltf)
 build_third_party_lib(xdelta3 xdelta3)
 

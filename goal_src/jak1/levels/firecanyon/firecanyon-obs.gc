@@ -11,6 +11,7 @@
    balloon-idle
    balloon-popping))
 
+
 (defpartgroup group-balloon
   :id 227
   :duration (seconds 0.017)
@@ -19,7 +20,7 @@
 
 (defpart 1007
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 8.0)
    (:x (meters -1) (meters 2))
    (:y (meters 1) (meters 2))
@@ -38,7 +39,7 @@
 
 (defpart 1008
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 16.0)
    (:y (meters 2))
    (:scale-x (meters 0.5) (meters 1))
@@ -60,7 +61,7 @@
 
 (defpart 1006
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x12 :page #x2))
+  ((:texture (starflash effects))
    (:num 1.0)
    (:y (meters 2))
    (:scale-x (meters 12))
@@ -81,17 +82,7 @@
       (clear-collide-with-as (-> self root))
       (ja-post)
       (sound-play "cool-balloon")
-      (process-spawn part-tracker
-                     :init
-                     part-tracker-init
-                     (-> *part-group-id-table* 227)
-                     -1
-                     #f
-                     #f
-                     #f
-                     (-> self root trans)
-                     :to
-                     *entity-pool*)
+      (process-spawn part-tracker :init part-tracker-init group-balloon -1 #f #f #f (-> self root trans) :to *entity-pool*)
       (suspend)
       (cleanup-for-death self)
       (deactivate self)))
@@ -124,7 +115,7 @@
     (set! (-> this root) s4-0))
   (process-drawable-from-entity! this arg0)
   (initialize-skeleton this *balloon-sg* '())
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 227) this))
+  (set! (-> this part) (create-launch-control group-balloon this))
   (go balloon-idle)
   (none))
 
@@ -135,6 +126,7 @@
    spike-down
    spike-idle
    spike-up))
+
 
 (defskelgroup *spike-sg*
   spike
@@ -278,6 +270,7 @@
    idle
    die))
 
+
 (defpartgroup group-dark-cluster-explosion
   :id 228
   :duration (seconds 2)
@@ -356,7 +349,7 @@
 
 (defpart 2104
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x12 :page #x2))
+  ((:texture (starflash effects))
    (:num 32.0)
    (:x (meters -2) (meters 4))
    (:y (meters 1) (meters 2))
@@ -374,7 +367,7 @@
 
 (defpart 2101
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 12.0)
    (:y (meters 1) (meters 3))
    (:scale-x (meters 0.4) (meters 0.8))
@@ -401,7 +394,7 @@
 
 (defpart 2103
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 12.0)
    (:y (meters 1) (meters 3))
    (:scale-x (meters 0.3))
@@ -418,7 +411,7 @@
 
 (defpart 2100
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x12 :page #x2))
+  ((:texture (starflash effects))
    (:num 1.0)
    (:y (meters 2))
    (:scale-x (meters 24))
@@ -433,7 +426,7 @@
 
 (defpart 2102
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 16.0)
    (:y (meters 1) (meters 3))
    (:scale-x (meters 3) (meters 1.5))
@@ -467,7 +460,7 @@
       (process-spawn part-tracker
                      :init
                      part-tracker-init
-                     (-> *part-group-id-table* 228)
+                     group-dark-cluster-explosion
                      -1
                      #f
                      #f

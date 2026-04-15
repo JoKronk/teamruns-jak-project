@@ -83,7 +83,11 @@ add_library(common
         util/dialogs.cpp
         util/diff.cpp
         util/FileUtil.cpp
-        util/FontUtils.cpp
+        util/font/dbs/font_db_jak1.cpp
+        util/font/dbs/font_db_jak2.cpp
+        util/font/dbs/font_db_jak3.cpp
+        util/font/font_utils_korean.cpp
+        util/font/font_utils.cpp
         util/FrameLimiter.cpp
         util/json_util.cpp
         util/os.cpp
@@ -95,6 +99,7 @@ add_library(common
         util/Timer.cpp
         util/unicode_util.cpp
         util/gltf_util.cpp
+        util/image_resize.cpp
         versions/versions.cpp
         )
 

@@ -9,7 +9,6 @@ add_executable(goalc-test
         ${CMAKE_CURRENT_LIST_DIR}/test_kernel_jak1.cpp
         ${CMAKE_CURRENT_LIST_DIR}/all_jak1_symbols.cpp
         ${CMAKE_CURRENT_LIST_DIR}/test_type_system.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/test_CodeTester.cpp
         ${CMAKE_CURRENT_LIST_DIR}/test_emitter.cpp
         ${CMAKE_CURRENT_LIST_DIR}/test_emitter_avx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/test_common_util.cpp
@@ -17,7 +16,6 @@ add_executable(goalc-test
         ${CMAKE_CURRENT_LIST_DIR}/test_math.cpp
         ${CMAKE_CURRENT_LIST_DIR}/test_zstd.cpp
         ${CMAKE_CURRENT_LIST_DIR}/test_zydis.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/goalc/test_goal_kernel.cpp
         ${CMAKE_CURRENT_LIST_DIR}/decompiler/FormRegressionTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/decompiler/test_AtomicOpBuilder.cpp
         ${CMAKE_CURRENT_LIST_DIR}/decompiler/test_FormBeforeExpressions.cpp
@@ -38,6 +36,9 @@ add_executable(goalc-test
         )
 
 target_link_libraries(goalc-test common runtime compiler gtest decomp Zydis libzstd_static tree-sitter)
+
+add_executable(test_image_resize ${CMAKE_CURRENT_LIST_DIR}/common/test_image_resize.cpp)
+target_link_libraries(test_image_resize common)
 
 if(WIN32)
   target_link_libraries(goalc-test mman)

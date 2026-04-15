@@ -13,7 +13,7 @@
 #include "decompiler/ObjectFile/LinkedObjectFile.h"
 #include "decompiler/analysis/final_output.h"
 
-#include "fmt/core.h"
+#include "fmt/format.h"
 
 namespace decompiler {
 
@@ -1067,6 +1067,10 @@ const std::unordered_map<
                 ArrayFieldDecompMeta(TypeSpec("uint64"),
                                      8,
                                      ArrayFieldDecompMeta::Kind::REF_TO_INTEGER_ARR)}}},
+         }},
+        {GameVersion::JakX,
+         {
+             // TODO
          }}};
 
 goos::Object decompile_structure(const TypeSpec& type,

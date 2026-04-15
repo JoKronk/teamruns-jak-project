@@ -38,22 +38,21 @@
   :post ja-post)
 
 (defbehavior misty-camera-view silostep ()
-  (if *enable-ingame-cutscenes?*
-    (set! (-> self cam-tracker)
-          (ppointer->handle (process-spawn camera-tracker
-                                          :init
-                                          camera-tracker-init
-                                          (lambda :behavior camera-tracker ()
-                                            (while (not (process-grab? *target*))
-                                              (suspend))
-                                            (camera-change-to "camera-160" 150 #f)
-                                            (suspend-for (seconds 3))
-                                            (while (not (process-release? (handle->process (-> self grab-target))))
-                                              (suspend))
-                                            (camera-change-to (the-as string 'base) 150 #f)
-                                            (none))
-                                          :to
-                                          self))))
+  (set! (-> self cam-tracker)
+        (ppointer->handle (process-spawn camera-tracker
+                                         :init
+                                         camera-tracker-init
+                                         (lambda :behavior camera-tracker ()
+                                           (while (not (process-grab? *target*))
+                                             (suspend))
+                                           (camera-change-to "camera-160" 150 #f)
+                                           (suspend-for (seconds 3))
+                                           (while (not (process-release? (handle->process (-> self grab-target))))
+                                             (suspend))
+                                           (camera-change-to (the-as string 'base) 150 #f)
+                                           (none))
+                                         :to
+                                         self)))
   (none))
 
 (defstate silostep-camera (silostep)

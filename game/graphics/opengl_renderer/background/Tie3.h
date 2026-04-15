@@ -30,6 +30,7 @@ class Tie3 : public BucketRenderer {
   Tie3(const std::string& name,
        int my_id,
        int level_id,
+       const std::vector<GLuint>* anim_slot_array,
        tfrag3::TieCategory category = tfrag3::TieCategory::NORMAL);
   void render(DmaFollower& dma, SharedRenderState* render_state, ScopedProfilerNode& prof) override;
   void draw_debug_window() override;
@@ -149,7 +150,6 @@ class Tie3 : public BucketRenderer {
   static constexpr int TIME_OF_DAY_COLOR_COUNT = 8192;
 
   bool m_has_level = false;
-  bool m_use_fast_time_of_day = true;
   bool m_debug_all_visible = false;
   bool m_hide_wind = false;
   bool m_draw_envmap_second_draw = true;
@@ -169,7 +169,7 @@ class Tie3 : public BucketRenderer {
   } m_uniforms;
 
   EtieUniforms m_etie_uniforms, m_etie_base_uniforms;
-
+  const std::vector<GLuint>* m_anim_slot_array;
   static_assert(sizeof(WindWork) == 84 * 16);
 };
 

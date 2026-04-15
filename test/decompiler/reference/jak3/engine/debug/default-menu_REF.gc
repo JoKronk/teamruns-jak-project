@@ -269,13 +269,13 @@
   (case arg0
     (('close)
      (if (and *math-camera* *subdivide-settings*)
-         (* 0.00024414062 (-> *subdivide-settings* close 0))
+         (/ (-> *subdivide-settings* close 0) METER_LENGTH)
          arg3
          )
      )
     (('far)
      (if (and *math-camera* *subdivide-settings*)
-         (* 0.00024414062 (-> *subdivide-settings* far 0))
+         (/ (-> *subdivide-settings* far 0) METER_LENGTH)
          arg3
          )
      )
@@ -558,7 +558,7 @@
     (if (= arg1 (debug-menu-msg press))
         (set! (-> v1-0 camera-to-bbox-dist) (* 4096.0 arg2))
         )
-    (* 0.00024414062 (-> v1-0 camera-to-bbox-dist))
+    (/ (-> v1-0 camera-to-bbox-dist) METER_LENGTH)
     )
   )
 
@@ -1119,7 +1119,7 @@
                          )
                        )
                      )
-                   (set! f30-0 (* 0.00024414062 f1-2))
+                   (set! f30-0 (/ f1-2 METER_LENGTH))
                    )
                  )
                 )
@@ -1155,7 +1155,7 @@
                        (set! (-> (the-as prototype-bucket-tie s2-0) tie-vanish-far) f0-0)
                        )
                      )
-                   (set! f30-0 (* 0.00024414062 f0-0))
+                   (set! f30-0 (/ f0-0 METER_LENGTH))
                    )
                  )
                 )
@@ -2699,7 +2699,7 @@
                           (set! (-> s2-0 dists x) (* 4096.0 arg2))
                           (prototype-bucket-recalc-fields s2-0)
                           )
-                        (set! f30-0 (* 0.00024414062 (-> s2-0 dists x)))
+                        (set! f30-0 (/ (-> s2-0 dists x) METER_LENGTH))
                         )
                       )
                     )
@@ -2733,7 +2733,7 @@
                           (set! (-> s2-0 dists w) (* 4096.0 arg2))
                           (prototype-bucket-recalc-fields s2-0)
                           )
-                        (set! f30-0 (* 0.00024414062 (-> s2-0 dists w)))
+                        (set! f30-0 (/ (-> s2-0 dists w) METER_LENGTH))
                         )
                       )
                     )
@@ -4934,13 +4934,9 @@
            (function
              "Start Editor"
              #f
-             ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float)) (when (not (get-nav-graph-editor))
-                                                                        (let ((t9-1 run-nav-graph-editor)
-                                                                              (a0-1 'test)
-                                                                              )
-                                                                          (t9-1 a0-1)
+             ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float)) (if (not (get-nav-graph-editor))
+                                                                          (run-nav-graph-editor 'test #f)
                                                                           )
-                                                                        )
                       )
              )
            (function
@@ -4954,24 +4950,22 @@
            (function
              "Toggle Plane Mode"
              #f
-             ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
-                (let ((a0-1 (get-nav-graph-editor)))
-                  (if a0-1
-                      ((method-of-object a0-1 nav-graph-editor-method-64))
+             ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float)) (let ((a0-1 (get-nav-graph-editor)))
+                                                                        (if a0-1
+                                                                            (nav-graph-editor-method-64 a0-1)
+                                                                            )
+                                                                        )
                       )
-                  )
-                )
              )
            (function
              "Toggle Hover Mode"
              #f
-             ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
-                (let ((a0-1 (get-nav-graph-editor)))
-                  (if a0-1
-                      ((method-of-object a0-1 nav-graph-editor-method-65))
+             ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float)) (let ((a0-1 (get-nav-graph-editor)))
+                                                                        (if a0-1
+                                                                            (nav-graph-editor-method-65 a0-1)
+                                                                            )
+                                                                        )
                       )
-                  )
-                )
              )
            (menu
              "Load"
@@ -4980,13 +4974,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'hover
-                        'foresta
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'hover (the-as string 'foresta))
                         )
-                      )
                     )
                   )
                )
@@ -4995,13 +4985,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'hover
-                        'sewc
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'hover (the-as string 'sewc))
                         )
-                      )
                     )
                   )
                )
@@ -5010,13 +4996,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'hover
-                        'sewg
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'hover (the-as string 'sewg))
                         )
-                      )
                     )
                   )
                )
@@ -5025,13 +5007,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'hover
-                        'sewl
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'hover (the-as string 'sewl))
                         )
-                      )
                     )
                   )
                )
@@ -5040,12 +5018,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'traffic
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'traffic (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5054,12 +5029,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'minimap
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'minimap (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5068,12 +5040,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'flyingsaw_2
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'flyingsaw_2 (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5082,12 +5051,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'flyingsaw_3
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'flyingsaw_3 (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5096,12 +5062,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'forest-plant-1
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'forest-plant-1 (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5110,12 +5073,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'forest-plant-2
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'forest-plant-2 (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5124,12 +5084,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'forest-plant-3
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'forest-plant-3 (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5138,12 +5095,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'forest-plant-4
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'forest-plant-4 (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5152,12 +5106,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'beast
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'beast (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5166,12 +5117,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'wasminimap
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'wasminimap (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5180,12 +5128,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'desrescue
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'desrescue (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5194,12 +5139,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'assault
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'assault (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5208,12 +5150,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'timer-chase-1
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'timer-chase-1 (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5222,12 +5161,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'protect-hq
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'protect-hq (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5236,12 +5172,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'blow-tower
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'blow-tower (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5250,12 +5183,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'desert-lizard
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'desert-lizard (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5264,12 +5194,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'terraformer-walk
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'terraformer-walk (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5278,12 +5205,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'terraformer-fly
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'terraformer-fly (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5292,12 +5216,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'beast-battle
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'beast-battle (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5306,12 +5227,9 @@
                #f
                ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                   (let ((a0-1 (get-nav-graph-editor)))
-                    (when a0-1
-                      (let ((t9-1 (method-of-object a0-1 nav-graph-editor-method-66)))
-                        'desert-chase-marauder
-                        (t9-1)
+                    (if a0-1
+                        (nav-graph-editor-method-66 a0-1 'desert-chase-marauder (the-as string #f))
                         )
-                      )
                     )
                   )
                )
@@ -5319,13 +5237,12 @@
            (function
              "Save"
              #f
-             ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
-                (let ((a0-1 (get-nav-graph-editor)))
-                  (if a0-1
-                      ((method-of-object a0-1 nav-graph-editor-method-67))
+             ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float)) (let ((a0-1 (get-nav-graph-editor)))
+                                                                        (if a0-1
+                                                                            (nav-graph-editor-method-67 a0-1)
+                                                                            )
+                                                                        )
                       )
-                  )
-                )
              )
            )
         )
@@ -5342,20 +5259,7 @@
              ,(lambda ((arg0 int) (arg1 debug-menu-msg) (arg2 float))
                 (when (not *nav-mesh-editor*)
                   (kill-by-type nav-mesh-editor *active-pool*)
-                  (let ((gp-0 (get-process *default-dead-pool* nav-mesh-editor #x4000 1)))
-                    (when gp-0
-                      (let ((t9-2 (method-of-type nav-mesh-editor activate)))
-                        (t9-2 (the-as nav-mesh-editor gp-0) *entity-pool* "nav-mesh-editor" (the-as pointer #x70004000))
-                        )
-                      (let ((t9-3 run-function-in-process)
-                            (a0-4 gp-0)
-                            (a1-4 nav-mesh-editor-init)
-                            )
-                        ((the-as (function object object none) t9-3) a0-4 a1-4)
-                        )
-                      (-> gp-0 ppointer)
-                      )
-                    )
+                  (process-spawn nav-mesh-editor :init nav-mesh-editor-init #f :name "nav-mesh-editor" :to *entity-pool*)
                   )
                 )
              )
@@ -6208,13 +6112,13 @@
                             fog-dists
                             x
                             )
-                        (* 0.00024414062
-                           (-> *overide-mood-fog-table*
+                        (/ (-> *overide-mood-fog-table*
                                data
                                (the-as uint (logand (-> *time-of-day-context* mode) (time-of-day-palette-id unk0 unk1 unk2)))
                                fog-dists
                                x
                                )
+                           METER_LENGTH
                            )
                         )
                   (set! (-> *overide-mood-fog-table*
@@ -6223,13 +6127,13 @@
                             fog-dists
                             y
                             )
-                        (* 0.00024414062
-                           (-> *overide-mood-fog-table*
+                        (/ (-> *overide-mood-fog-table*
                                data
                                (the-as uint (logand (-> *time-of-day-context* mode) (time-of-day-palette-id unk0 unk1 unk2)))
                                fog-dists
                                y
                                )
+                           METER_LENGTH
                            )
                         )
                   )
@@ -6242,10 +6146,10 @@
                   (dotimes (v1-0 8)
                     (set! (-> *overide-mood-fog-table* data v1-0 fog-color w) 1.0)
                     (set! (-> *overide-mood-fog-table* data v1-0 fog-dists x)
-                          (* 0.00024414062 (-> *overide-mood-fog-table* data v1-0 fog-dists x))
+                          (/ (-> *overide-mood-fog-table* data v1-0 fog-dists x) METER_LENGTH)
                           )
                     (set! (-> *overide-mood-fog-table* data v1-0 fog-dists y)
-                          (* 0.00024414062 (-> *overide-mood-fog-table* data v1-0 fog-dists y))
+                          (/ (-> *overide-mood-fog-table* data v1-0 fog-dists y) METER_LENGTH)
                           )
                     )
                   #f
@@ -6568,10 +6472,10 @@
                   (set! (-> *overide-mood-color-table* data v1-0 amb-color w) 1.0)
                   (set! (-> *overide-mood-fog-table* data v1-0 fog-color w) 1.0)
                   (set! (-> *overide-mood-fog-table* data v1-0 fog-dists x)
-                        (* 0.00024414062 (-> *overide-mood-fog-table* data v1-0 fog-dists x))
+                        (/ (-> *overide-mood-fog-table* data v1-0 fog-dists x) METER_LENGTH)
                         )
                   (set! (-> *overide-mood-fog-table* data v1-0 fog-dists y)
-                        (* 0.00024414062 (-> *overide-mood-fog-table* data v1-0 fog-dists y))
+                        (/ (-> *overide-mood-fog-table* data v1-0 fog-dists y) METER_LENGTH)
                         )
                   (set-vector! (-> *time-of-day-context* times v1-0) 1.0 1.0 1.0 1.0)
                   )

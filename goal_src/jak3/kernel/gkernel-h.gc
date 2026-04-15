@@ -257,7 +257,7 @@
     (deactivate  (_type_) none)
     (init-from-entity! (_type_ entity-actor) object) ;; todo check
     (run-logic? (_type_) symbol)
-    (process-tree-method-13 () none)
+    (entity-info-slot () none)
     )
   :no-runtime-type
   )
@@ -523,6 +523,7 @@
   )
 
 (define *sql-result* (the-as sql-result #f))
+(define-extern *collapse-quote* symbol)
 
 (defmacro defbehavior (name process-type bindings &rest body)
   "define a new behavior. This is simply a function where self is bound to the process register,

@@ -14,7 +14,7 @@
   )
 
 (defpart 1127
-  :init-specs ((:texture (new 'static 'texture-id :index #x92 :page #xc))
+  :init-specs ((:texture (motion-blur-part effects))
     (:num 5.0 5.0)
     (:scale-x (meters 2.5))
     (:rot-x 4)
@@ -45,7 +45,7 @@
   )
 
 (defpart 1128
-  :init-specs ((:texture (new 'static 'texture-id :index #x92 :page #xc))
+  :init-specs ((:texture (motion-blur-part effects))
     (:num 2.0 2 3.0)
     (:scale-x (meters 2.5))
     (:rot-x 4)
@@ -218,8 +218,8 @@
     (the-as skeleton-group (art-group-get-by-name *level* "skel-strip-chain-crate" (the-as (pointer uint32) #f)))
     (the-as pair 0)
     )
-  (set! (-> self part) (create-launch-control (-> *part-group-id-table* 238) self))
-  (set! (-> self part2) (create-launch-control (-> *part-group-id-table* 239) self))
+  (set! (-> self part) (create-launch-control group-chain-crate-cable-sparks self))
+  (set! (-> self part2) (create-launch-control group-chain-crate-guide-sparks self))
   (set! (-> self path) (new 'process 'curve-control self 'path -1000000000.0))
   (logior! (-> self path flags) (path-control-flag display draw-line draw-point draw-text))
   (let ((f0-7 (total-distance (-> self path))))
@@ -244,6 +244,7 @@
   )
 
 (defmethod deactivate ((this strip-chain-crate-slave))
+  "Make a process dead, clean it up, remove it from the active pool, and return to dead pool."
   (if (nonzero? (-> this part2))
       (kill-and-free-particles (-> this part2))
       )
@@ -252,11 +253,11 @@
   )
 
 ;; WARN: Return type mismatch process-drawable vs strip-chain-crate-slave.
-(defmethod relocate ((this strip-chain-crate-slave) (arg0 int))
+(defmethod relocate ((this strip-chain-crate-slave) (offset int))
   (if (nonzero? (-> this part2))
-      (&+! (-> this part2) arg0)
+      (&+! (-> this part2) offset)
       )
-  (the-as strip-chain-crate-slave ((method-of-type process-drawable relocate) this arg0))
+  (the-as strip-chain-crate-slave ((method-of-type process-drawable relocate) this offset))
   )
 
 (deftype strip-chain-crate (process-drawable)
@@ -316,11 +317,11 @@
 ;; WARN: Return type mismatch object vs none.
 (defmethod init-from-entity! ((this strip-chain-crate) (arg0 entity-actor))
   "Typically the method that does the initial setup on the process, potentially using the [[entity-actor]] provided as part of that.
-This commonly includes things such as:
-- stack size
-- collision information
-- loading the skeleton group / bones
-- sounds"
+   This commonly includes things such as:
+   - stack size
+   - collision information
+   - loading the skeleton group / bones
+   - sounds"
   (local-vars (sv-16 int))
   (set! (-> this root) (new 'process 'trsqv))
   (set! (-> this path) (new 'process 'curve-control this 'path -1000000000.0))

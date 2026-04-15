@@ -52,7 +52,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1893
-  :init-specs ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  :init-specs ((:texture (hotdot effects))
     (:num 15.0)
     (:y (meters 1.5))
     (:z (meters 0))
@@ -85,7 +85,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1895
-  :init-specs ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  :init-specs ((:texture (hotdot effects))
     (:num 16.0)
     (:x (meters 5.5))
     (:y (meters 1.5))
@@ -362,8 +362,8 @@
     )
   (process-drawable-from-entity! this arg0)
   (initialize-skeleton this *snow-bumper-sg* '())
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 519) this))
-  (set! (-> this part2) (create-launch-control (-> *part-group-id-table* 520) this))
+  (set! (-> this part) (create-launch-control group-snow-bumper-idle this))
+  (set! (-> this part2) (create-launch-control group-snow-bumper-shove this))
   (nav-mesh-connect this (-> this root) (the-as nav-control #f))
   (set! (-> this link) (new 'process 'actor-link-info this))
   (set! (-> this bumper-id) (+ (actor-count-before (-> this link)) 1))

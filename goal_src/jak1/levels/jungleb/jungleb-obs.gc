@@ -40,7 +40,7 @@
 
 (defpart 904
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x2 :page #x2))
+  ((:texture (flare effects))
    (:num 30.0)
    (:y (meters -4))
    (:scale-x (meters 20) (meters 10))
@@ -66,7 +66,7 @@
 
 (defpart 899
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 1.0)
    (:y (meters -4))
    (:scale-x (meters 10) (meters 2))
@@ -80,7 +80,7 @@
 
 (defpart 900
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 1.0)
    (:y (meters -4))
    (:scale-x (meters 3) (meters 2))
@@ -94,7 +94,7 @@
 
 (defpart 901
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1f :page #x2))
+  ((:texture (lightning effects))
    (:num 0.5 1.0)
    (:y (meters -4))
    (:scale-x (meters 3) (meters 3))
@@ -116,7 +116,7 @@
 
 (defpart 902
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1f :page #x2))
+  ((:texture (lightning effects))
    (:num 0.5 1.0)
    (:y (meters -4))
    (:scale-x (meters 3) (meters 3))
@@ -135,7 +135,7 @@
 
 (defpart 903
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1f :page #x2))
+  ((:texture (lightning effects))
    (:num 1.0 1.0)
    (:y (meters -6.5) (meters 1))
    (:scale-x (meters 6) (meters 2))
@@ -190,7 +190,7 @@
         (process-spawn part-tracker
                        :init
                        part-tracker-init
-                       (-> *part-group-id-table* 190)
+                       group-jungle-blue-eco-room-activate
                        -1
                        #f
                        #f
@@ -198,29 +198,28 @@
                        (-> self root trans)
                        :to
                        *entity-pool*)
-        (when *enable-ingame-cutscenes?*
-          (set! (-> self cam-tracker)
-                (ppointer->handle (process-spawn camera-tracker
-                                                :init
-                                                camera-tracker-init
-                                                (lambda :behavior camera-tracker ()
-                                                  (while (not (process-grab? *target*))
-                                                    (suspend))
-                                                  (suspend-for (seconds 1))
-                                                  (send-event *camera* 'blend-from-as-fixed)
-                                                  (camera-look-at (the-as pair "ecovent-171") (the-as uint 0))
-                                                  (camera-change-to "camera-223" 0 #f)
-                                                  (suspend-for (seconds 3))
-                                                  (while (not (process-release? (handle->process (-> self grab-target))))
-                                                    (suspend))
-                                                  (send-event *camera* 'blend-from-as-fixed)
-                                                  (level-hint-spawn (text-id jungle-eggtop-resolution) "asstvb02" (the-as entity #f) *entity-pool* (game-task none))
-                                                  (camera-look-at (the-as pair *target*) (the-as uint 0))
-                                                  (camera-change-to (the-as string 'base) 150 #f)
-                                                  (send-event (ppointer->process (-> *hud-parts* fuel-cell)) 'show)
-                                                  (none))
-                                                :to
-                                                self))))
+        (set! (-> self cam-tracker)
+              (ppointer->handle (process-spawn camera-tracker
+                                               :init
+                                               camera-tracker-init
+                                               (lambda :behavior camera-tracker ()
+                                                 (while (not (process-grab? *target*))
+                                                   (suspend))
+                                                 (suspend-for (seconds 1))
+                                                 (send-event *camera* 'blend-from-as-fixed)
+                                                 (camera-look-at (the-as pair "ecovent-171") (the-as uint 0))
+                                                 (camera-change-to "camera-223" 0 #f)
+                                                 (suspend-for (seconds 3))
+                                                 (while (not (process-release? (handle->process (-> self grab-target))))
+                                                   (suspend))
+                                                 (send-event *camera* 'blend-from-as-fixed)
+                                                 (level-hint-spawn (text-id jungle-eggtop-resolution) "asstvb02" (the-as entity #f) *entity-pool* (game-task none))
+                                                 (camera-look-at (the-as pair *target*) (the-as uint 0))
+                                                 (camera-change-to (the-as string 'base) 150 #f)
+                                                 (send-event (ppointer->process (-> *hud-parts* fuel-cell)) 'show)
+                                                 (none))
+                                               :to
+                                               self)))
         (save-reminder (get-task-control (-> self entity extra perm task)) 2 0)
         (sound-play "jngb-eggtop-seq")
         (ja-no-eval :group! eggtop-idle-ja :num! (seek!) :frame-num 0.0)
@@ -257,7 +256,7 @@
   (initialize-skeleton this *eggtop-sg* '())
   (logior! (-> this skel status) (janim-status inited))
   (update-transforms! (-> this root))
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 189) this))
+  (set! (-> this part) (create-launch-control group-jungle-blue-eco-room-open this))
   (set! (-> this sound-id) (new-sound-id))
   (cond
     ((task-complete? *game-info* (-> this entity extra perm task)) (go eggtop-close #t))

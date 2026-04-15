@@ -87,7 +87,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1716
-  :init-specs ((:texture (new 'static 'texture-id :page #x2))
+  :init-specs ((:texture (bigpuff effects))
     (:num 0.0 1.0)
     (:scale-x (meters 1) (meters 0.5))
     (:rot-z (degrees 0) (degrees 360))
@@ -109,7 +109,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1715
-  :init-specs ((:texture (new 'static 'texture-id :page #x2))
+  :init-specs ((:texture (bigpuff effects))
     (:num 1.0 2.0)
     (:sound (static-sound-spec "steam-medium" :num 0.05 :volume 80.0))
     (:scale-x (meters 0.75) (meters 0.75))
@@ -133,7 +133,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1717
-  :init-specs ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  :init-specs ((:texture (hotdot effects))
     (:num 1.0 3.0)
     (:scale-x (meters 1.7) (meters 0.3))
     (:scale-y :copy scale-x)
@@ -274,8 +274,8 @@
   (quaternion-copy! (-> self root quat) (-> arg1 root quat))
   (set! (-> self root scale quad) (-> arg1 root scale quad))
   (+! (-> self root trans y) -5324.8)
-  (set! (-> self part) (create-launch-control (-> *part-group-id-table* 440) self))
-  (set! (-> self part2) (create-launch-control (-> *part-group-id-table* 107) self))
+  (set! (-> self part) (create-launch-control group-orbit-plat-jet self))
+  (set! (-> self part2) (create-launch-control group-standard-plat self))
   (initialize-skeleton self *orbit-plat-bottom-sg* '())
   (ja-channel-set! 1)
   (ja :group! orbit-plat-bottom-idle-ja :num! min)

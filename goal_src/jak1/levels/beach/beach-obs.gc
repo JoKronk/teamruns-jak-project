@@ -106,7 +106,7 @@
 
 (defpart 539
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1d :page #x2))
+  ((:texture (rockbit effects))
    (:num 0.5)
    (:x (meters -9) (meters 18))
    (:y (meters -6))
@@ -128,7 +128,7 @@
 
 (defpart 540
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 12.0)
    (:y (meters -7))
    (:scale-x (meters 3) (meters 4.5))
@@ -310,7 +310,7 @@
   (set! (-> this distance) (res-lump-float arg0 'distance :default 3072.0))
   (set! (-> this position) 0)
   (set! (-> this max-position) (res-lump-value arg0 'num-positions int :default (the-as uint128 3)))
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 155) this))
+  (set! (-> this part) (create-launch-control group-beach-grotto-pole-rocks this))
   (set! (-> this position) (-> this entity extra perm user-int16 0))
   (move-grottopole-to-position this)
   (go grottopole-idle)
@@ -344,7 +344,7 @@
 
 (defpart 547
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x12 :page #x2))
+  ((:texture (starflash effects))
    (:num 1.0)
    (:scale-x (meters 15))
    (:scale-y :copy scale-x)
@@ -358,7 +358,7 @@
 
 (defpart 543
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1d :page #x2))
+  ((:texture (rockbit effects))
    (:num 4.0 6.0)
    (:scale-x (meters 0.1) (meters 0.3))
    (:rot-z (degrees 0) (degrees 360))
@@ -380,7 +380,7 @@
 
 (defpart 544
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1d :page #x2))
+  ((:texture (rockbit effects))
    (:num 4.0 6.0)
    (:scale-x (meters 0.1) (meters 0.3))
    (:rot-z (degrees 0) (degrees 360))
@@ -402,7 +402,7 @@
 
 (defpart 545
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x1d :page #x2))
+  ((:texture (rockbit effects))
    (:num 4.0 6.0)
    (:scale-x (meters 0.1) (meters 0.3))
    (:rot-z (degrees 0) (degrees 360))
@@ -427,7 +427,7 @@
 
 (defpart 548
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 16.0)
    (:y (meters 0.5) (meters 1))
    (:scale-x (meters 2.5) (meters 1.5))
@@ -483,7 +483,7 @@
         (process-spawn part-tracker
                        :init
                        part-tracker-init
-                       (-> *part-group-id-table* 156)
+                       group-beach-harvester-rock-explosion
                        -1
                        #f
                        #f
@@ -520,7 +520,7 @@
           (set-vector! s4-0 (+ (-> s5-1 x) (-> s3-0 x)) (-> s5-1 y) (+ (-> s5-1 z) (-> s3-0 z)) 1.0)
           (vector-float*! s3-0 s3-0 10.0)
           (spawn-flying-rock s4-0 s3-0 1.0 (-> self entity))
-          (set-vector! s3-0 (+ (* -0.866 f26-0) (* 0.5 f28-0)) (* 0.5 f30-0) (+ (* 0.866 f28-0) (* 0.5 f26-0)) 1.0)
+          (set-vector! s3-0 (+ (* -0.866 f26-0) (/ f28-0 2)) (/ f30-0 2) (+ (* 0.866 f28-0) (/ f26-0 2)) 1.0)
           (set-vector! s4-0 (-> s5-1 x) (+ 3276.8 (-> s5-1 y)) (-> s5-1 z) 1.0)
           (vector-float*! s3-0 s3-0 10.0)
           (spawn-flying-rock s4-0 s3-0 1.0 (-> self entity))))
@@ -874,24 +874,23 @@
   :code
     (behavior ()
       (local-vars (v1-25 symbol))
-      (when *enable-ingame-cutscenes?*
-        (process-spawn camera-tracker
-                      :init
-                      camera-tracker-init
-                      (lambda :behavior camera-tracker ()
-                        (while (not (process-grab? *target*))
-                          (suspend))
-                        (camera-change-to "camera-135" 0 #f)
-                        (camera-look-at (the-as pair (ppointer->process (-> self parent))) (the-as uint 9))
-                        (suspend-for (seconds 4))
-                        (while (not (process-release? (handle->process (-> self grab-target))))
-                          (suspend))
-                        (camera-look-at (the-as pair *target*) (the-as uint 0))
-                        (send-event *camera* 'blend-from-as-fixed)
-                        (camera-change-to (the-as string 'base) 75 #f)
-                        (none))
-                      :to
-                      self))
+      (process-spawn camera-tracker
+                     :init
+                     camera-tracker-init
+                     (lambda :behavior camera-tracker ()
+                       (while (not (process-grab? *target*))
+                         (suspend))
+                       (camera-change-to "camera-135" 0 #f)
+                       (camera-look-at (the-as pair (ppointer->process (-> self parent))) (the-as uint 9))
+                       (suspend-for (seconds 4))
+                       (while (not (process-release? (handle->process (-> self grab-target))))
+                         (suspend))
+                       (camera-look-at (the-as pair *target*) (the-as uint 0))
+                       (send-event *camera* 'blend-from-as-fixed)
+                       (camera-change-to (the-as string 'base) 75 #f)
+                       (none))
+                     :to
+                     self)
       (close-specific-task! (game-task beach-flutflut) (task-status need-reminder))
       (loop
         (vector-float*! (-> self root transv) (-> self dir) (-> self vel))

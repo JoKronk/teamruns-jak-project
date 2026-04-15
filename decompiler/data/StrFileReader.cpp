@@ -23,6 +23,7 @@ StrFileReader::StrFileReader(const fs::path& file_path, GameVersion version) : m
       break;
     case GameVersion::Jak2:
     case GameVersion::Jak3:
+    case GameVersion::JakX:
       init_jak2(file_path);
       break;
     default:
@@ -166,7 +167,7 @@ FullName extract_name(const std::string& file_info_name) {
   name.name = name.name.substr(0, name.name.length() - 6);
   int chunk_id = 0;
   int place = 0;
-  for (int i = 2; i-- > 0;) {
+  for (int i = 3; i-- > 0;) {
     char c = name.name.back();
     if (c >= '0' && c <= '9') {
       int val = (c - '0');

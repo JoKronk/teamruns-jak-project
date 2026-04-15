@@ -15,12 +15,15 @@
         )
     (when (wascity-turret-get-reticle-fire-pos s4-0)
       (transform-point-vector! s5-0 s4-0)
-      (if (logtest? (-> *game-info* secrets) (game-secrets hflip-screen))
-          (set! (-> s5-0 x) (- (-> s5-0 x)))
-          )
+      ;; og:preserve-this mirror mode
+      ;; Since we don't properly flip the screen, don't mess with the hud (or the reticule moves in the opposite direction)
+      ;; (if (or (logtest? (-> *game-info* secrets) (game-secrets hflip-screen))
+      ;;         *PC-MIRROR-MODE-SET*)
+      ;;     (set! (-> s5-0 x) (- (-> s5-0 x)))
+      ;;     )
       (+! (-> s5-0 x) -1792.0)
       (+! (-> s5-0 y) -1840.0)
-      (set-hud-piece-position! (the-as hud-sprite (-> this sprites)) (the int (-> s5-0 x)) (the int (-> s5-0 y)))
+      (set-hud-piece-position! (-> this sprites 0) (the int (-> s5-0 x)) (the int (-> s5-0 y)))
       )
     )
   (set! (-> this sprites 0 pos z) #xfffff0)
@@ -62,7 +65,8 @@
         (let ((s3-0 (the-as object (new 'stack-no-clear 'vector4w))))
           (set! (-> (the-as vector4w s3-0) quad) (the-as uint128 0))
           (when (transform-point-qword! (the-as vector4w s3-0) (-> this position s5-2))
-            (when (logtest? (-> *game-info* secrets) (game-secrets hflip-screen))
+            ;; og:preserve-this mirror mode
+            (when (or (logtest? (-> *game-info* secrets) (game-secrets hflip-screen)) *PC-MIRROR-MODE-SET*)
               (+! (-> (the-as (pointer uint32) s3-0) 0) -32768)
               (set! (-> (the-as (pointer uint32) s3-0) 0)
                     (the-as uint (- (the-as int (-> (the-as (pointer uint32) s3-0) 0))))
@@ -129,8 +133,10 @@
           (s4-2 (new 'stack 'vector4w))
           )
       (b! (< (-> this minfo s5-3 pos y) (+ -20480.0 (get-base-height *ocean-map*))) cfg-53)
-      (transform-point-vector! s3-3 (the-as vector (-> this minfo s5-3)))
-      (if (logtest? (-> *game-info* secrets) (game-secrets hflip-screen))
+      (transform-point-vector! s3-3 (-> this minfo s5-3 pos))
+      ;; og:preserve-this mirror mode
+      (if (or (logtest? (-> *game-info* secrets) (game-secrets hflip-screen))
+              *PC-MIRROR-MODE-SET*)
           (set! (-> s3-3 x) (- (-> s3-3 x)))
           )
       (+! (-> s3-3 x) -2048.0)
@@ -151,7 +157,7 @@
       (set! (-> s4-2 y) (+ (the int (-> s3-3 y)) -50))
       1.0
       (let ((s2-3 (min 2 (the int (* 3.0 (-> this minfo s5-3 hit-points))))))
-        (let ((f0-48 (* 0.00005 (-> s3-3 z))))
+        (let ((f0-48 (/ (-> s3-3 z) 20000)))
           (set! (-> this reticle s2-3 scale-x) f0-48)
           (set! (-> this reticle s2-3 scale-y) f0-48)
           )
@@ -275,14 +281,16 @@
      0
      )
     (('off-to-left)
-     (logior! (-> this offscreen) (if (logtest? (-> *game-info* secrets) (game-secrets hflip-screen))
+     ;; og:preserve-this mirror mode
+     (logior! (-> this offscreen) (if (or (logtest? (-> *game-info* secrets) (game-secrets hflip-screen)) *PC-MIRROR-MODE-SET*)
                                       2
                                       1
                                       )
               )
      )
     (('off-to-right)
-     (logior! (-> this offscreen) (if (logtest? (-> *game-info* secrets) (game-secrets hflip-screen))
+     ;; og:preserve-this mirror mode
+     (logior! (-> this offscreen) (if (or (logtest? (-> *game-info* secrets) (game-secrets hflip-screen)) *PC-MIRROR-MODE-SET*)
                                       1
                                       2
                                       )
@@ -291,7 +299,7 @@
     (('maker-update)
      (when (< (-> this maker-idx) (the-as uint 15))
        (let ((v1-12 (-> this minfo (-> this maker-idx))))
-         (set! (-> v1-12 pos quad) (-> (the-as vector (-> arg3 param 0)) quad))
+         (vector-copy! (-> v1-12 pos) (the-as vector (-> arg3 param 0)))
          (set! (-> v1-12 hit-points) (the-as float (-> arg3 param 1)))
          (set! (-> v1-12 targeted) (the-as symbol (-> arg3 param 2)))
          )
@@ -307,7 +315,7 @@
     (b! #t cfg-4 :delay (nop!))
     (label cfg-1)
     (b! (nonzero? (-> this scoretimes v1-0)) cfg-3 :delay (empty-form))
-    (set! (-> this position v1-0 quad) (-> arg2 quad))
+    (vector-copy! (-> this position v1-0) arg2)
     (set! (-> this vel v1-0) 0.0)
     (set! (-> this multiplier v1-0) (the-as uint arg1))
     (set! (-> this scores v1-0) arg0)

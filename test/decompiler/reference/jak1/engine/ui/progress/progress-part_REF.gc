@@ -313,7 +313,7 @@
 
 ;; failed to figure out what this is:
 (defpart 337
-  :init-specs ((:texture (new 'static 'texture-id :index #x36 :page #x2))
+  :init-specs ((:texture (p-white effects))
     (:num 1.0)
     (:scale-x (meters 15))
     (:scale-y (meters 11.5))
@@ -329,7 +329,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2190
-  :init-specs ((:texture (new 'static 'texture-id :index #x6e :page #x1cf))
+  :init-specs ((:texture (powercell-icon common))
     (:num 1.0)
     (:scale-x (meters 0.8))
     (:scale-y :copy scale-x)
@@ -345,7 +345,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2191
-  :init-specs ((:texture (new 'static 'texture-id :index #x6d :page #x1cf))
+  :init-specs ((:texture (egg-icon common))
     (:num 1.0)
     (:x (meters 1.05))
     (:scale-x (meters 0.8))
@@ -362,7 +362,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2192
-  :init-specs ((:texture (new 'static 'texture-id :index #x6c :page #x1cf))
+  :init-specs ((:texture (buzzerfly-icon common))
     (:num 1.0)
     (:x (meters 2.3))
     (:scale-x (meters 0.8))
@@ -379,7 +379,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2336
-  :init-specs ((:texture (new 'static 'texture-id :index #x5 :page #x408))
+  :init-specs ((:texture (headhud-button-01 Hud))
     (:num 1.0)
     (:scale-x (meters 1.6))
     (:scale-y :copy scale-x)
@@ -395,7 +395,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2337
-  :init-specs ((:texture (new 'static 'texture-id :index #x6 :page #x408))
+  :init-specs ((:texture (headhud-button-02 Hud))
     (:num 1.0)
     (:scale-x (meters 1.6))
     (:scale-y :copy scale-x)
@@ -411,7 +411,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2338
-  :init-specs ((:texture (new 'static 'texture-id :index #x7 :page #x408))
+  :init-specs ((:texture (headhud-button-03 Hud))
     (:num 1.0)
     (:scale-x (meters 1.6))
     (:scale-y :copy scale-x)
@@ -427,7 +427,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2339
-  :init-specs ((:texture (new 'static 'texture-id :index #x8 :page #x408))
+  :init-specs ((:texture (headhud-button-04 Hud))
     (:num 1.0)
     (:scale-x (meters 1.6))
     (:scale-y :copy scale-x)
@@ -443,7 +443,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2142
-  :init-specs ((:texture (new 'static 'texture-id :index #x36 :page #x2))
+  :init-specs ((:texture (p-white effects))
     (:num 1.0)
     (:scale-x (meters 9.2))
     (:scale-y (meters 2))
@@ -459,7 +459,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2143
-  :init-specs ((:texture (new 'static 'texture-id :index #x36 :page #x2))
+  :init-specs ((:texture (p-white effects))
     (:num 1.0)
     (:scale-x (meters 9.2))
     (:scale-y (meters 2))
@@ -475,7 +475,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2144
-  :init-specs ((:texture (new 'static 'texture-id :index #x36 :page #x2))
+  :init-specs ((:texture (p-white effects))
     (:num 1.0)
     (:scale-x (meters 9.2))
     (:scale-y (meters 2))
@@ -491,7 +491,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2145
-  :init-specs ((:texture (new 'static 'texture-id :index #x36 :page #x2))
+  :init-specs ((:texture (p-white effects))
     (:num 1.0)
     (:scale-x (meters 9.2))
     (:scale-y (meters 2))
@@ -507,7 +507,7 @@
 
 ;; failed to figure out what this is:
 (defpart 332
-  :init-specs ((:texture (new 'static 'texture-id :index #x2 :page #x408))
+  :init-specs ((:texture (previous Hud))
     (:num 1.0)
     (:scale-x (meters 1.2))
     (:scale-y :copy scale-x)
@@ -522,7 +522,7 @@
 
 ;; failed to figure out what this is:
 (defpart 333
-  :init-specs ((:texture (new 'static 'texture-id :index #x1 :page #x408))
+  :init-specs ((:texture (next Hud))
     (:num 1.0)
     (:scale-x (meters 1.2))
     (:scale-y :copy scale-x)
@@ -537,7 +537,7 @@
 
 ;; failed to figure out what this is:
 (defpart 334
-  :init-specs ((:texture (new 'static 'texture-id :index #x4 :page #x408))
+  :init-specs ((:texture (selector Hud))
     (:num 1.0)
     (:scale-x (meters 1.8))
     (:scale-y :copy scale-x)
@@ -552,7 +552,7 @@
 
 ;; failed to figure out what this is:
 (defpart 335
-  :init-specs ((:texture (new 'static 'texture-id :page #x408))
+  :init-specs ((:texture (left Hud))
     (:num 1.0)
     (:scale-x (meters 3.5))
     (:scale-y (meters 13))
@@ -568,7 +568,7 @@
 
 ;; failed to figure out what this is:
 (defpart 336
-  :init-specs ((:texture (new 'static 'texture-id :index #x3 :page #x408))
+  :init-specs ((:texture (right Hud))
     (:num 1.0)
     (:scale-x (meters 6))
     (:scale-y (meters 13))
@@ -584,7 +584,7 @@
 
 ;; failed to figure out what this is:
 (defpart 339
-  :init-specs ((:texture (new 'static 'texture-id :index #x31 :page #x2))
+  :init-specs ((:texture (hud-powercell-orbit effects))
     (:num 1.0)
     (:scale-x (meters 0.3))
     (:scale-y :copy scale-x)
@@ -601,7 +601,7 @@
 
 ;; failed to figure out what this is:
 (defpart 340
-  :init-specs ((:texture (new 'static 'texture-id :index #x31 :page #x2))
+  :init-specs ((:texture (hud-powercell-orbit effects))
     (:num 1.0)
     (:scale-x (meters 0.3))
     (:scale-y :copy scale-x)
@@ -618,7 +618,7 @@
 
 ;; failed to figure out what this is:
 (defpart 341
-  :init-specs ((:texture (new 'static 'texture-id :index #x31 :page #x2))
+  :init-specs ((:texture (hud-powercell-orbit effects))
     (:num 1.0)
     (:scale-x (meters 0.3))
     (:scale-y :copy scale-x)
@@ -635,7 +635,7 @@
 
 ;; failed to figure out what this is:
 (defpart 342
-  :init-specs ((:texture (new 'static 'texture-id :index #x31 :page #x2))
+  :init-specs ((:texture (hud-powercell-orbit effects))
     (:num 1.0)
     (:scale-x (meters 0.3))
     (:scale-y :copy scale-x)
@@ -652,7 +652,7 @@
 
 ;; failed to figure out what this is:
 (defpart 343
-  :init-specs ((:texture (new 'static 'texture-id :index #x31 :page #x2))
+  :init-specs ((:texture (hud-powercell-orbit effects))
     (:num 1.0)
     (:scale-x (meters 0.2))
     (:scale-y :copy scale-x)
@@ -669,7 +669,7 @@
 
 ;; failed to figure out what this is:
 (defpart 338
-  :init-specs ((:texture (new 'static 'texture-id :index #x30 :page #x2))
+  :init-specs ((:texture (hud-powercell effects))
     (:num 1.0)
     (:scale-x (meters 1.2))
     (:scale-y :copy scale-x)
@@ -691,7 +691,7 @@
 
 ;; failed to figure out what this is:
 (defpart 345
-  :init-specs ((:texture (new 'static 'texture-id :index #x2 :page #x2))
+  :init-specs ((:texture (flare effects))
     (:num 0.5)
     (:z (meters 0.52734375))
     (:scale-x (meters 0.25))
@@ -717,7 +717,7 @@
 
 ;; failed to figure out what this is:
 (defpart 346
-  :init-specs ((:texture (new 'static 'texture-id :index #x2 :page #x2))
+  :init-specs ((:texture (flare effects))
     (:num 0.06)
     (:z (meters 0.52734375))
     (:scale-x (meters 1) (meters 0.25))
@@ -742,7 +742,7 @@
 
 ;; failed to figure out what this is:
 (defpart 347
-  :init-specs ((:texture (new 'static 'texture-id :index #x12 :page #x2))
+  :init-specs ((:texture (starflash effects))
     (:num 1.0)
     (:z (meters 0.52734375))
     (:scale-x (meters 2))
@@ -762,7 +762,7 @@
 
 ;; failed to figure out what this is:
 (defpart 348
-  :init-specs ((:texture (new 'static 'texture-id :index #x12 :page #x2))
+  :init-specs ((:texture (starflash effects))
     (:num 1.0)
     (:z (meters 0.52734375))
     (:scale-x (meters 2.4))
@@ -806,7 +806,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1982
-  :init-specs ((:texture (new 'static 'texture-id :index #x2a :page #x2))
+  :init-specs ((:texture (hud-buzzer effects))
     (:num 1.0)
     (:scale-x (meters 2.2))
     (:scale-y :copy scale-x)
@@ -821,7 +821,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1981
-  :init-specs ((:texture (new 'static 'texture-id :index #x2a :page #x2))
+  :init-specs ((:texture (hud-buzzer effects))
     (:num 1.0)
     (:x (meters 0))
     (:y (meters 1.3333334))
@@ -850,7 +850,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1983
-  :init-specs ((:texture (new 'static 'texture-id :index #x2c :page #x2))
+  :init-specs ((:texture (hud-egg effects))
     (:num 1.0)
     (:scale-x (meters 2.2))
     (:scale-y :copy scale-x)
@@ -873,7 +873,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1985
-  :init-specs ((:texture (new 'static 'texture-id :index #x2a :page #x2))
+  :init-specs ((:texture (hud-buzzer effects))
     (:num 1.0)
     (:scale-x (meters 1))
     (:scale-y :copy scale-x)
@@ -888,7 +888,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1984
-  :init-specs ((:texture (new 'static 'texture-id :index #x2a :page #x2))
+  :init-specs ((:texture (hud-buzzer effects))
     (:num 1.0)
     (:x (meters 0))
     (:y (meters 1.3333334))
@@ -918,7 +918,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1986
-  :init-specs ((:texture (new 'static 'texture-id :index #x2c :page #x2))
+  :init-specs ((:texture (hud-egg effects))
     (:num 1.0)
     (:scale-x (meters 1.3))
     (:scale-y :copy scale-x)
@@ -942,7 +942,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2478
-  :init-specs ((:texture (new 'static 'texture-id :index #x6b :page #x1cf))
+  :init-specs ((:texture (checkpoint common))
     (:num 1.0)
     (:scale-x (meters 1.8))
     (:scale-y :copy scale-x)
@@ -962,7 +962,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-0 (-> this nb-of-particles)))
       (set! (-> this particles s5-0) (new 'static 'hud-particle))
-      (set! (-> this particles s5-0 part) (create-launch-control (-> *part-group-id-table* 90) this))
+      (set! (-> this particles s5-0 part) (create-launch-control group-part-progress-hud-tint this))
       (set! (-> this particles s5-0 init-pos x) 256.0)
       (set! (-> this particles s5-0 init-pos y) 224.0)
       (set! (-> this particles s5-0 init-pos z) 16.0)
@@ -973,7 +973,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-1 (-> this nb-of-particles)))
       (set! (-> this particles s5-1) (new 'static 'hud-particle))
-      (set! (-> this particles s5-1 part) (create-launch-control (-> *part-group-id-table* 88) this))
+      (set! (-> this particles s5-1 part) (create-launch-control group-part-progress-hud-left this))
       (set! (-> this particles s5-1 init-pos x) -42.0)
       (set! (-> this particles s5-1 init-pos y) 254.0)
       (set! (-> this particles s5-1 init-pos z) 5.0)
@@ -984,7 +984,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-2 (-> this nb-of-particles)))
       (set! (-> this particles s5-2) (new 'static 'hud-particle))
-      (set! (-> this particles s5-2 part) (create-launch-control (-> *part-group-id-table* 89) this))
+      (set! (-> this particles s5-2 part) (create-launch-control group-part-progress-hud-right this))
       (set! (-> this particles s5-2 init-pos x) 610.0)
       (set! (-> this particles s5-2 init-pos y) 254.0)
       (set! (-> this particles s5-2 init-pos z) 5.0)
@@ -995,7 +995,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-3 (-> this nb-of-particles)))
       (set! (-> this particles s5-3) (new 'static 'hud-particle))
-      (set! (-> this particles s5-3 part) (create-launch-control (-> *part-group-id-table* 85) this))
+      (set! (-> this particles s5-3 part) (create-launch-control group-part-progress-hud-previous this))
       (set! (-> this particles s5-3 init-pos x) -320.0)
       (set! (-> this particles s5-3 init-pos y) 40.0)
       (set! (-> this particles s5-3 init-pos z) 14.0)
@@ -1006,7 +1006,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-4 (-> this nb-of-particles)))
       (set! (-> this particles s5-4) (new 'static 'hud-particle))
-      (set! (-> this particles s5-4 part) (create-launch-control (-> *part-group-id-table* 86) this))
+      (set! (-> this particles s5-4 part) (create-launch-control group-part-progress-hud-next this))
       (set! (-> this particles s5-4 init-pos x) -320.0)
       (set! (-> this particles s5-4 init-pos y) 400.0)
       (set! (-> this particles s5-4 init-pos z) 14.0)
@@ -1017,7 +1017,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-5 (-> this nb-of-particles)))
       (set! (-> this particles s5-5) (new 'static 'hud-particle))
-      (set! (-> this particles s5-5 part) (create-launch-control (-> *part-group-id-table* 87) this))
+      (set! (-> this particles s5-5 part) (create-launch-control group-part-progress-hud-selector this))
       (set! (-> this particles s5-5 init-pos x) -320.0)
       (set! (-> this particles s5-5 init-pos y) 194.0)
       (set! (-> this particles s5-5 init-pos z) 15.0)
@@ -1028,7 +1028,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-6 (-> this nb-of-particles)))
       (set! (-> this particles s5-6) (new 'static 'hud-particle))
-      (set! (-> this particles s5-6 part) (create-launch-control (-> *part-group-id-table* 97) this))
+      (set! (-> this particles s5-6 part) (create-launch-control group-part-progress-hud-power-cell-whole this))
       (set! (-> this particles s5-6 init-pos x) -320.0)
       (set! (-> this particles s5-6 init-pos y) 194.0)
       (set! (-> this particles s5-6 init-pos z) 14.0)
@@ -1039,7 +1039,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-7 (-> this nb-of-particles)))
       (set! (-> this particles s5-7) (new 'static 'hud-particle))
-      (set! (-> this particles s5-7 part) (create-launch-control (-> *part-group-id-table* 97) this))
+      (set! (-> this particles s5-7 part) (create-launch-control group-part-progress-hud-power-cell-whole this))
       (set! (-> this particles s5-7 init-pos x) -320.0)
       (set! (-> this particles s5-7 init-pos y) 194.0)
       (set! (-> this particles s5-7 init-pos z) 14.0)
@@ -1050,7 +1050,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-8 (-> this nb-of-particles)))
       (set! (-> this particles s5-8) (new 'static 'hud-particle))
-      (set! (-> this particles s5-8 part) (create-launch-control (-> *part-group-id-table* 97) this))
+      (set! (-> this particles s5-8 part) (create-launch-control group-part-progress-hud-power-cell-whole this))
       (set! (-> this particles s5-8 init-pos x) -320.0)
       (set! (-> this particles s5-8 init-pos y) 194.0)
       (set! (-> this particles s5-8 init-pos z) 14.0)
@@ -1061,7 +1061,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-9 (-> this nb-of-particles)))
       (set! (-> this particles s5-9) (new 'static 'hud-particle))
-      (set! (-> this particles s5-9 part) (create-launch-control (-> *part-group-id-table* 97) this))
+      (set! (-> this particles s5-9 part) (create-launch-control group-part-progress-hud-power-cell-whole this))
       (set! (-> this particles s5-9 init-pos x) -320.0)
       (set! (-> this particles s5-9 init-pos y) 194.0)
       (set! (-> this particles s5-9 init-pos z) 14.0)
@@ -1072,7 +1072,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-10 (-> this nb-of-particles)))
       (set! (-> this particles s5-10) (new 'static 'hud-particle))
-      (set! (-> this particles s5-10 part) (create-launch-control (-> *part-group-id-table* 97) this))
+      (set! (-> this particles s5-10 part) (create-launch-control group-part-progress-hud-power-cell-whole this))
       (set! (-> this particles s5-10 init-pos x) -320.0)
       (set! (-> this particles s5-10 init-pos y) 194.0)
       (set! (-> this particles s5-10 init-pos z) 14.0)
@@ -1083,7 +1083,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-11 (-> this nb-of-particles)))
       (set! (-> this particles s5-11) (new 'static 'hud-particle))
-      (set! (-> this particles s5-11 part) (create-launch-control (-> *part-group-id-table* 97) this))
+      (set! (-> this particles s5-11 part) (create-launch-control group-part-progress-hud-power-cell-whole this))
       (set! (-> this particles s5-11 init-pos x) -320.0)
       (set! (-> this particles s5-11 init-pos y) 194.0)
       (set! (-> this particles s5-11 init-pos z) 14.0)
@@ -1094,7 +1094,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-12 (-> this nb-of-particles)))
       (set! (-> this particles s5-12) (new 'static 'hud-particle))
-      (set! (-> this particles s5-12 part) (create-launch-control (-> *part-group-id-table* 97) this))
+      (set! (-> this particles s5-12 part) (create-launch-control group-part-progress-hud-power-cell-whole this))
       (set! (-> this particles s5-12 init-pos x) -320.0)
       (set! (-> this particles s5-12 init-pos y) 194.0)
       (set! (-> this particles s5-12 init-pos z) 14.0)
@@ -1105,7 +1105,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-13 (-> this nb-of-particles)))
       (set! (-> this particles s5-13) (new 'static 'hud-particle))
-      (set! (-> this particles s5-13 part) (create-launch-control (-> *part-group-id-table* 97) this))
+      (set! (-> this particles s5-13 part) (create-launch-control group-part-progress-hud-power-cell-whole this))
       (set! (-> this particles s5-13 init-pos x) -320.0)
       (set! (-> this particles s5-13 init-pos y) 194.0)
       (set! (-> this particles s5-13 init-pos z) 14.0)
@@ -1116,7 +1116,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-14 (-> this nb-of-particles)))
       (set! (-> this particles s5-14) (new 'static 'hud-particle))
-      (set! (-> this particles s5-14 part) (create-launch-control (-> *part-group-id-table* 98) this))
+      (set! (-> this particles s5-14 part) (create-launch-control group-part-progress-buzzer this))
       (set! (-> this particles s5-14 init-pos x) -320.0)
       (set! (-> this particles s5-14 init-pos y) 224.0)
       (set! (-> this particles s5-14 init-pos z) 14.0)
@@ -1127,7 +1127,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-15 (-> this nb-of-particles)))
       (set! (-> this particles s5-15) (new 'static 'hud-particle))
-      (set! (-> this particles s5-15 part) (create-launch-control (-> *part-group-id-table* 99) this))
+      (set! (-> this particles s5-15 part) (create-launch-control group-part-progress-orb this))
       (set! (-> this particles s5-15 init-pos x) -320.0)
       (set! (-> this particles s5-15 init-pos y) 224.0)
       (set! (-> this particles s5-15 init-pos z) 14.0)
@@ -1138,7 +1138,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-16 (-> this nb-of-particles)))
       (set! (-> this particles s5-16) (new 'static 'hud-particle))
-      (set! (-> this particles s5-16 part) (create-launch-control (-> *part-group-id-table* 97) this))
+      (set! (-> this particles s5-16 part) (create-launch-control group-part-progress-hud-power-cell-whole this))
       (set! (-> this particles s5-16 init-pos x) -320.0)
       (set! (-> this particles s5-16 init-pos y) 112.0)
       (set! (-> this particles s5-16 init-pos z) 4.0)
@@ -1149,7 +1149,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-17 (-> this nb-of-particles)))
       (set! (-> this particles s5-17) (new 'static 'hud-particle))
-      (set! (-> this particles s5-17 part) (create-launch-control (-> *part-group-id-table* 100) this))
+      (set! (-> this particles s5-17 part) (create-launch-control group-part-progress-buzzer-small this))
       (set! (-> this particles s5-17 init-pos x) -320.0)
       (set! (-> this particles s5-17 init-pos y) 193.0)
       (set! (-> this particles s5-17 init-pos z) 4.0)
@@ -1160,7 +1160,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-18 (-> this nb-of-particles)))
       (set! (-> this particles s5-18) (new 'static 'hud-particle))
-      (set! (-> this particles s5-18 part) (create-launch-control (-> *part-group-id-table* 101) this))
+      (set! (-> this particles s5-18 part) (create-launch-control group-part-progress-orb-small this))
       (set! (-> this particles s5-18 init-pos x) -320.0)
       (set! (-> this particles s5-18 init-pos y) 40.0)
       (set! (-> this particles s5-18 init-pos z) 4.0)
@@ -1171,7 +1171,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-19 (-> this nb-of-particles)))
       (set! (-> this particles s5-19) (new 'static 'hud-particle))
-      (set! (-> this particles s5-19 part) (create-launch-control (-> *part-group-id-table* 92) this))
+      (set! (-> this particles s5-19 part) (create-launch-control group-part-progress-card-slot-01 this))
       (set! (-> this particles s5-19 init-pos x) -320.0)
       (set! (-> this particles s5-19 init-pos y) 90.0)
       (set! (-> this particles s5-19 init-pos z) 16.0)
@@ -1182,7 +1182,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-20 (-> this nb-of-particles)))
       (set! (-> this particles s5-20) (new 'static 'hud-particle))
-      (set! (-> this particles s5-20 part) (create-launch-control (-> *part-group-id-table* 93) this))
+      (set! (-> this particles s5-20 part) (create-launch-control group-part-progress-card-slot-02 this))
       (set! (-> this particles s5-20 init-pos x) -320.0)
       (set! (-> this particles s5-20 init-pos y) 172.0)
       (set! (-> this particles s5-20 init-pos z) 16.0)
@@ -1193,7 +1193,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-21 (-> this nb-of-particles)))
       (set! (-> this particles s5-21) (new 'static 'hud-particle))
-      (set! (-> this particles s5-21 part) (create-launch-control (-> *part-group-id-table* 94) this))
+      (set! (-> this particles s5-21 part) (create-launch-control group-part-progress-card-slot-03 this))
       (set! (-> this particles s5-21 init-pos x) -320.0)
       (set! (-> this particles s5-21 init-pos y) 254.0)
       (set! (-> this particles s5-21 init-pos z) 16.0)
@@ -1204,7 +1204,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-22 (-> this nb-of-particles)))
       (set! (-> this particles s5-22) (new 'static 'hud-particle))
-      (set! (-> this particles s5-22 part) (create-launch-control (-> *part-group-id-table* 95) this))
+      (set! (-> this particles s5-22 part) (create-launch-control group-part-progress-card-slot-04 this))
       (set! (-> this particles s5-22 init-pos x) -320.0)
       (set! (-> this particles s5-22 init-pos y) 336.0)
       (set! (-> this particles s5-22 init-pos z) 16.0)
@@ -1215,7 +1215,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-23 (-> this nb-of-particles)))
       (set! (-> this particles s5-23) (new 'static 'hud-particle))
-      (set! (-> this particles s5-23 part) (create-launch-control (-> *part-group-id-table* 91) this))
+      (set! (-> this particles s5-23 part) (create-launch-control group-part-progress-card-cell this))
       (set! (-> this particles s5-23 init-pos x) -320.0)
       (set! (-> this particles s5-23 init-pos y) 102.0)
       (set! (-> this particles s5-23 init-pos z) 13.0)
@@ -1226,7 +1226,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-24 (-> this nb-of-particles)))
       (set! (-> this particles s5-24) (new 'static 'hud-particle))
-      (set! (-> this particles s5-24 part) (create-launch-control (-> *part-group-id-table* 91) this))
+      (set! (-> this particles s5-24 part) (create-launch-control group-part-progress-card-cell this))
       (set! (-> this particles s5-24 init-pos x) -320.0)
       (set! (-> this particles s5-24 init-pos y) 184.0)
       (set! (-> this particles s5-24 init-pos z) 13.0)
@@ -1237,7 +1237,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-25 (-> this nb-of-particles)))
       (set! (-> this particles s5-25) (new 'static 'hud-particle))
-      (set! (-> this particles s5-25 part) (create-launch-control (-> *part-group-id-table* 91) this))
+      (set! (-> this particles s5-25 part) (create-launch-control group-part-progress-card-cell this))
       (set! (-> this particles s5-25 init-pos x) -320.0)
       (set! (-> this particles s5-25 init-pos y) 266.0)
       (set! (-> this particles s5-25 init-pos z) 13.0)
@@ -1248,7 +1248,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-26 (-> this nb-of-particles)))
       (set! (-> this particles s5-26) (new 'static 'hud-particle))
-      (set! (-> this particles s5-26 part) (create-launch-control (-> *part-group-id-table* 91) this))
+      (set! (-> this particles s5-26 part) (create-launch-control group-part-progress-card-cell this))
       (set! (-> this particles s5-26 init-pos x) -320.0)
       (set! (-> this particles s5-26 init-pos y) 348.0)
       (set! (-> this particles s5-26 init-pos z) 13.0)
@@ -1259,7 +1259,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-27 (-> this nb-of-particles)))
       (set! (-> this particles s5-27) (new 'static 'hud-particle))
-      (set! (-> this particles s5-27 part) (create-launch-control (-> *part-group-id-table* 570) this))
+      (set! (-> this particles s5-27 part) (create-launch-control group-part-progress-button-x this))
       (set! (-> this particles s5-27 init-pos x) -320.0)
       (set! (-> this particles s5-27 init-pos y) 338.0)
       (set! (-> this particles s5-27 init-pos z) 4.0)
@@ -1270,7 +1270,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-28 (-> this nb-of-particles)))
       (set! (-> this particles s5-28) (new 'static 'hud-particle))
-      (set! (-> this particles s5-28 part) (create-launch-control (-> *part-group-id-table* 571) this))
+      (set! (-> this particles s5-28 part) (create-launch-control group-part-progress-button-square this))
       (set! (-> this particles s5-28 init-pos x) -320.0)
       (set! (-> this particles s5-28 init-pos y) 338.0)
       (set! (-> this particles s5-28 init-pos z) 4.0)
@@ -1281,7 +1281,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-29 (-> this nb-of-particles)))
       (set! (-> this particles s5-29) (new 'static 'hud-particle))
-      (set! (-> this particles s5-29 part) (create-launch-control (-> *part-group-id-table* 572) this))
+      (set! (-> this particles s5-29 part) (create-launch-control group-part-progress-button-triangle this))
       (set! (-> this particles s5-29 init-pos x) -320.0)
       (set! (-> this particles s5-29 init-pos y) 338.0)
       (set! (-> this particles s5-29 init-pos z) 4.0)
@@ -1292,7 +1292,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-30 (-> this nb-of-particles)))
       (set! (-> this particles s5-30) (new 'static 'hud-particle))
-      (set! (-> this particles s5-30 part) (create-launch-control (-> *part-group-id-table* 573) this))
+      (set! (-> this particles s5-30 part) (create-launch-control group-part-progress-button-circle this))
       (set! (-> this particles s5-30 init-pos x) -320.0)
       (set! (-> this particles s5-30 init-pos y) 338.0)
       (set! (-> this particles s5-30 init-pos z) 4.0)
@@ -1303,7 +1303,7 @@
   (when (< (-> this nb-of-particles) (-> this max-nb-of-particles))
     (let ((s5-31 (-> this nb-of-particles)))
       (set! (-> this particles s5-31) (new 'static 'hud-particle))
-      (set! (-> this particles s5-31 part) (create-launch-control (-> *part-group-id-table* 615) this))
+      (set! (-> this particles s5-31 part) (create-launch-control group-part-progress-save-icon this))
       (set! (-> this particles s5-31 init-pos x) -320.0)
       (set! (-> this particles s5-31 init-pos y) 180.0)
       (set! (-> this particles s5-31 init-pos z) 4.0)

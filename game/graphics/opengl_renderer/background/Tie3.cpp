@@ -6,8 +6,15 @@
 
 #include "third-party/imgui/imgui.h"
 
-Tie3::Tie3(const std::string& name, int my_id, int level_id, tfrag3::TieCategory category)
-    : BucketRenderer(name, my_id), m_level_id(level_id), m_default_category(category) {
+Tie3::Tie3(const std::string& name,
+           int my_id,
+           int level_id,
+           const std::vector<GLuint>* anim_slot_array,
+           tfrag3::TieCategory category)
+    : BucketRenderer(name, my_id),
+      m_level_id(level_id),
+      m_default_category(category),
+      m_anim_slot_array(anim_slot_array) {
   // regardless of how many we use some fixed max
   // we won't actually interp or upload to gpu the unused ones, but we need a fixed maximum so
   // indexing works properly.
@@ -573,8 +580,12 @@ void Tie3::draw_matching_draws_for_tree(int idx,
       }
     }
 
-    if ((int)draw.tree_tex_id != last_texture) {
-      glBindTexture(GL_TEXTURE_2D, m_textures->at(draw.tree_tex_id));
+    if (draw.tree_tex_id != last_texture) {
+      if (draw.tree_tex_id >= 0) {
+        glBindTexture(GL_TEXTURE_2D, m_textures->at(draw.tree_tex_id));
+      } else {
+        glBindTexture(GL_TEXTURE_2D, m_anim_slot_array->at(-(draw.tree_tex_id + 1)));
+      }
       last_texture = draw.tree_tex_id;
     }
 
@@ -665,8 +676,13 @@ void Tie3::envmap_second_pass_draw(const Tree& tree,
       }
     }
 
-    if ((int)draw.tree_tex_id != last_texture) {
-      glBindTexture(GL_TEXTURE_2D, m_textures->at(draw.tree_tex_id));
+    if (draw.tree_tex_id != last_texture) {
+      if (draw.tree_tex_id >= 0) {
+        glBindTexture(GL_TEXTURE_2D, m_textures->at(draw.tree_tex_id));
+      } else {
+        glBindTexture(GL_TEXTURE_2D, m_anim_slot_array->at(-(draw.tree_tex_id + 1)));
+      }
+
       last_texture = draw.tree_tex_id;
     }
 
@@ -695,7 +711,6 @@ void Tie3::envmap_second_pass_draw(const Tree& tree,
 void Tie3::draw_debug_window() {
   ImGui::Checkbox("envmap 2nd draw", &m_draw_envmap_second_draw);
   ImGui::SliderFloat("envmap str", &m_envmap_strength, 0, 2);
-  ImGui::Checkbox("Fast ToD", &m_use_fast_time_of_day);
   ImGui::SameLine();
   ImGui::Checkbox("All Visible", &m_debug_all_visible);
   ImGui::Checkbox("Hide Wind", &m_hide_wind);
@@ -916,17 +931,35 @@ void Tie3::render_tree_wind(int idx,
     out[3] = cam[0] * mat[3].x() + cam[1] * mat[3].y() + cam[2] * mat[3].z() + cam[3];
   }
 
+  auto shader_id = ShaderId::TIE_WIND;
+  first_tfrag_draw_setup(settings.camera, render_state, shader_id);
+  glBindVertexArray(tree.vao);
+  glBindBuffer(GL_ARRAY_BUFFER, tree.vertex_buffer);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,
+               render_state->no_multidraw ? tree.single_draw_index_buffer : tree.index_buffer);
+
+  glActiveTexture(GL_TEXTURE10);
+  glBindTexture(GL_TEXTURE_1D, tree.time_of_day_texture);
+
+  glActiveTexture(GL_TEXTURE0);
+  glEnable(GL_PRIMITIVE_RESTART);
+  glPrimitiveRestartIndex(UINT32_MAX);
+
   int last_texture = -1;
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tree.wind_vertex_index_buffer);
 
   for (size_t draw_idx = 0; draw_idx < tree.wind_draws->size(); draw_idx++) {
     const auto& draw = tree.wind_draws->operator[](draw_idx);
 
-    if ((int)draw.tree_tex_id != last_texture) {
-      glBindTexture(GL_TEXTURE_2D, m_textures->at(draw.tree_tex_id));
+    if (draw.tree_tex_id != last_texture) {
+      if (draw.tree_tex_id >= 0) {
+        glBindTexture(GL_TEXTURE_2D, m_textures->at(draw.tree_tex_id));
+      } else {
+        glBindTexture(GL_TEXTURE_2D, m_anim_slot_array->at(-(draw.tree_tex_id + 1)));
+      }
       last_texture = draw.tree_tex_id;
     }
-    auto double_draw = setup_tfrag_shader(render_state, draw.mode, ShaderId::TFRAG3);
+    auto double_draw = setup_tfrag_shader(render_state, draw.mode, shader_id);
 
     int off = 0;
     for (auto& grp : draw.instance_groups) {
@@ -935,9 +968,8 @@ void Tie3::render_tree_wind(int idx,
         continue;  // invisible, skip.
       }
 
-      glUniformMatrix4fv(
-          glGetUniformLocation(render_state->shaders[ShaderId::TFRAG3].id(), "camera"), 1, GL_FALSE,
-          tree.wind_matrix_cache.at(grp.instance_idx)[0].data());
+      glUniformMatrix4fv(glGetUniformLocation(render_state->shaders[shader_id].id(), "camera"), 1,
+                         GL_FALSE, tree.wind_matrix_cache.at(grp.instance_idx)[0].data());
 
       prof.add_draw_call();
       prof.add_tri(grp.num);
@@ -952,12 +984,10 @@ void Tie3::render_tree_wind(int idx,
         case DoubleDrawKind::AFAIL_NO_DEPTH_WRITE:
           prof.add_draw_call();
           prof.add_tri(grp.num);
-          glUniform1f(
-              glGetUniformLocation(render_state->shaders[ShaderId::TFRAG3].id(), "alpha_min"),
-              -10.f);
-          glUniform1f(
-              glGetUniformLocation(render_state->shaders[ShaderId::TFRAG3].id(), "alpha_max"),
-              double_draw.aref_second);
+          glUniform1f(glGetUniformLocation(render_state->shaders[shader_id].id(), "alpha_min"),
+                      -10.f);
+          glUniform1f(glGetUniformLocation(render_state->shaders[shader_id].id(), "alpha_max"),
+                      double_draw.aref_second);
           glDepthMask(GL_FALSE);
           glDrawElements(tree.draw_mode, draw.vertex_index_stream.size(), GL_UNSIGNED_INT,
                          (void*)0);
@@ -993,7 +1023,7 @@ void Tie3AnotherCategory::render(DmaFollower& dma,
 }
 
 Tie3WithEnvmapJak1::Tie3WithEnvmapJak1(const std::string& name, int my_id, int level_id)
-    : Tie3(name, my_id, level_id, tfrag3::TieCategory::NORMAL) {}
+    : Tie3(name, my_id, level_id, nullptr, tfrag3::TieCategory::NORMAL) {}
 
 void Tie3WithEnvmapJak1::render(DmaFollower& dma,
                                 SharedRenderState* render_state,

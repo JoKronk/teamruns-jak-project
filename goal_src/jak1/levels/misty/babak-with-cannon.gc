@@ -212,8 +212,8 @@ nav-enemy-default-event-handler
   :event nav-enemy-default-event-handler
   :trans
     (behavior ()
-      (if (and *enable-ingame-cutscenes?* *target* (= (-> *target* current-level name) 'beach)) (spool-push *art-control* "beachcam-cannon" 0 self -1.0))
-      (if (and *enable-ingame-cutscenes?* *target* (= (-> *target* current-level name) 'misty)) (spool-push *art-control* "mistycam-cannon" 0 self -1.0))
+      (if (and *target* (= (-> *target* current-level name) 'beach)) (spool-push *art-control* "beachcam-cannon" 0 self -1.0))
+      (if (and *target* (= (-> *target* current-level name) 'misty)) (spool-push *art-control* "mistycam-cannon" 0 self -1.0))
       (call-parent-state-handler trans)))
 
 (defstate nav-enemy-fuel-cell (babak-with-cannon)

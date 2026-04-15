@@ -83,34 +83,19 @@
   :code
     (behavior ()
       (loop
-        (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
-          (let ((tgt (get-target tgt-idx)))
-            (when (and tgt
-                      (< (vector-vector-distance (-> self root trans) (-> tgt control unknown-vector90)) (-> self range))
-                      (logtest? (-> tgt control root-prim prim-core action) (collide-action edgegrab-possible))
-                      (< (-> tgt control unknown-vector90 y) (+ (-> self root trans y) (* 0.5 (-> self range)))))
-              (if (and (= tgt *target*) (send-event tgt 'pole-grab self)) (go swingpole-active)))))
+        (when (and *target*
+                   (< (vector-vector-distance (-> self root trans) (-> *target* control unknown-vector90)) (-> self range))
+                   (logtest? (-> *target* control root-prim prim-core action) (collide-action edgegrab-possible))
+                   (< (-> *target* control unknown-vector90 y) (+ (-> self root trans y) (/ (-> self range) 2))))
+          (if (send-event *target* 'pole-grab self) (go swingpole-active)))
         (suspend))))
 
 (defstate swingpole-active (swingpole)
   :code
     (behavior ()
       (suspend)
-      (let ((tgt-swinging? #t))
-        (while tgt-swinging?
-          (set! tgt-swinging? #f)
-          (dotimes (tgt-idx MAX_MULTIPLAYER_COUNT)
-            (let ((tgt (get-target tgt-idx)))
-              (when (and (= tgt *target*) tgt (= (handle->process (-> tgt control unknown-handle10)) self))
-                (set! tgt-swinging? #t)
-                )
-              )
-            )
-          (when tgt-swinging?
-            (suspend)
-            )
-          )
-        )
+      (while (and *target* (= (handle->process (-> *target* control unknown-handle10)) self))
+        (suspend))
       (suspend-for (seconds 0.5))
       (go swingpole-stance)))
 
@@ -382,7 +367,8 @@
               (vector+! (-> self root trans) (-> (the-as process-drawable gp-0) root trans) (-> self offset)))))
         (let ((gp-1 (-> self root trans))) (if (-> self callback) ((-> self callback) self)) (spawn (-> self part) gp-1))
         (suspend))
-      (suspend-for (-> self linger-duration) (if (-> self linger-callback) ((-> self linger-callback) self)))
+      (suspend-for (-> self linger-duration)
+        (if (-> self linger-callback) ((-> self linger-callback) self)))
       (if (-> self linger-callback) ((-> self linger-callback) self))
       (part-tracker-notify)
       (suspend)
@@ -726,7 +712,7 @@
                   (a0-18 (new 'stack-no-clear 'vector)))
               (.lvf vf16 (&-> v1-36 origin quad))
               (.lvf vf17 (&-> v1-36 bounds quad))
-              (.mul.x.vf vf16 vf16 vf0 :mask #b1000)
+              (.mul.x.vf.w vf16 vf16 vf0)
               (.add.vf vf16 vf16 vf17)
               (.svf (&-> a0-18 quad) vf16))
             (.mov v1-37 vf16))
@@ -879,7 +865,7 @@
 
 (defpart 46
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 1.0)
    (:x (meters 0) (meters 1.8))
    (:scale-x (meters 0.2))
@@ -898,7 +884,7 @@
 
 (defpart 47
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 2.0)
    (:x (meters 1.8) (meters 1))
    (:scale-x (meters 0.2))
@@ -917,7 +903,7 @@
 
 (defpart 48
   :init-specs
-  ((:texture (new 'static 'texture-id :index #x17 :page #x2))
+  ((:texture (woodchip effects))
    (:num 1.5)
    (:x (meters 2.9) (meters 2.5))
    (:y (meters -0.5))
@@ -940,7 +926,7 @@
 
 (defpart 49
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 0.5)
    (:x (meters 2.9) (meters 2.5))
    (:y (meters -0.5))
@@ -977,7 +963,7 @@
 
 (defpart 52
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 1.0)
    (:x (meters 0) (meters 1.4))
    (:scale-x (meters 0.2))
@@ -996,7 +982,7 @@
 
 (defpart 53
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 2.0)
    (:x (meters 1.4) (meters 0.9))
    (:scale-x (meters 0.2))
@@ -1015,7 +1001,7 @@
 
 (defpart 54
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 0.5)
    (:x (meters 2.9) (meters 2.5))
    (:y (meters -0.5))
@@ -1049,7 +1035,7 @@
 
 (defpart 55
   :init-specs
-  ((:texture (new 'static 'texture-id :page #x2))
+  ((:texture (bigpuff effects))
    (:num 0.5)
    (:x (meters 2.9) (meters 2.5))
    (:y (meters -0.5))
@@ -1274,9 +1260,9 @@
     (let ((v1-18 (-> this entity extra level name)))
       (set! (-> this part)
             (create-launch-control (cond
-                                     ((= v1-18 'beach) (-> *part-group-id-table* 37))
-                                     ((= v1-18 'swamp) (-> *part-group-id-table* 39))
-                                     (else (-> *part-group-id-table* 38)))
+                                     ((= v1-18 'beach) group-beach-launcher)
+                                     ((= v1-18 'swamp) group-swamp-launcher)
+                                     (else group-jungle-launcher))
                                    this)))
     (let ((v1-24 (logand (the-as int s4-1) 255)))
       (cond
@@ -1312,9 +1298,9 @@
   (let ((v1-23 (-> self entity extra level name)))
     (set! (-> self part)
           (create-launch-control (cond
-                                   ((= v1-23 'beach) (-> *part-group-id-table* 37))
-                                   ((= v1-23 'swamp) (-> *part-group-id-table* 39))
-                                   (else (-> *part-group-id-table* 38)))
+                                   ((= v1-23 'beach) group-beach-launcher)
+                                   ((= v1-23 'swamp) group-swamp-launcher)
+                                   (else group-jungle-launcher))
                                  self)))
   (case (logand arg2 255)
     ((1) (set! (-> self camera) cam-launcher-longfall))
@@ -1444,7 +1430,7 @@
       ((>= v1-1 7) (let ((v1-2 (rand-vu-int-range 3 (+ v1-1 -1)))) (vector<-cspace! arg1 (-> arg0 node-list data v1-2))))
       ((and (nonzero? s4-0) (type-type? (-> s4-0 type) collide-shape))
        (vector+! arg1
-                 (the-as vector (-> (the-as collide-shape s4-0) root-prim prim-core))
+                 (-> (the-as collide-shape s4-0) root-prim prim-core world-sphere)
                  (rand-vu-sphere-point! arg1 (-> (the-as collide-shape s4-0) root-prim prim-core world-sphere w))))
       (else (vector+! arg1 (-> arg0 root trans) (rand-vu-sphere-point! arg1 (-> arg0 draw bounds w))))))
   arg1)
@@ -1470,13 +1456,13 @@
         ((< (-> v1-0 w) 0.0)
          (.lvf vf1 (&-> a0-1 conerot quad))
          (.lvf vf2 (&-> v1-0 vec quad))
-         (.sub.vf vf1 vf0 vf2 :mask #b111)
+         (.sub.vf.xyz vf1 vf0 vf2)
          (.svf (&-> a0-1 conerot quad) vf1)
          (.mov a0-2 vf1))
         (else
          (.lvf vf1 (&-> a0-1 conerot quad))
          (.lvf vf2 (&-> v1-0 vec quad))
-         (.add.vf vf1 vf0 vf2 :mask #b111)
+         (.add.vf.xyz vf1 vf0 vf2)
          (.svf (&-> a0-1 conerot quad) vf1)
          (.mov a0-3 vf1))))
     0
@@ -1484,7 +1470,7 @@
 
 (defpart 2528
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xc :page #x2))
+  ((:texture (citadel-shield effects))
    (:birth-func 'birth-func-set-quat)
    (:num 1.0)
    (:scale-x (meters 2) (meters 0.5))

@@ -32,7 +32,7 @@
 
 (defpart 364
   :init-specs
-  ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  ((:texture (hotdot effects))
    (:num 2.0)
    (:y (meters 1.5))
    (:scale-x (meters 2) (meters 1))
@@ -62,6 +62,7 @@
    (plat-startup (plat) _type_ :state)
    (plat-idle () _type_ :state)
    (plat-path-active (plat) _type_ :state)))
+
 
 (defskelgroup *plat-sg*
   plat
@@ -119,7 +120,7 @@
 (defmethod baseplat-method-25 ((this plat))
   (the-as sparticle-launch-group
           (when (!= (-> (if (-> this entity) (-> this entity extra level) (-> *level* level-default)) name) 'maincave)
-            (let ((v0-0 (create-launch-control (-> *part-group-id-table* 107) this))) (set! (-> this part) v0-0) v0-0))))
+            (let ((v0-0 (create-launch-control group-standard-plat this))) (set! (-> this part) v0-0) v0-0))))
 
 (defstate plat-startup (plat)
   :virtual #t

@@ -251,7 +251,7 @@
             (send-event
               (ppointer->process v1-8)
               'eval
-              (lambda :behavior pelican () (let ((v0-0 (create-launch-control (-> *part-group-id-table* 63) self)))
+              (lambda :behavior pelican () (let ((v0-0 (create-launch-control group-fuel-cell-starburst self)))
                                              (set! (-> self part) v0-0)
                                              v0-0
                                              )
@@ -586,7 +586,7 @@
   :post (behavior ()
     (when *target*
       (if *target*
-          (look-at-enemy! (-> *target* neck) (the-as vector (-> self root root-prim prim-core)) 'nothing self)
+          (look-at-enemy! (-> *target* neck) (-> self root root-prim prim-core world-sphere) 'nothing self)
           )
       (if (nonzero? (-> self neck))
           (set-target! (-> self neck) (target-pos 5))
@@ -803,7 +803,7 @@
       (process-spawn
         part-tracker
         :init part-tracker-init
-        (-> *part-group-id-table* 71)
+        group-crate-explode
         -1
         #f
         #f
@@ -908,7 +908,7 @@
          (send-event
            (ppointer->process s5-2)
            'eval
-           (lambda :behavior pelican () (let ((v0-0 (create-launch-control (-> *part-group-id-table* 63) self)))
+           (lambda :behavior pelican () (let ((v0-0 (create-launch-control group-fuel-cell-starburst self)))
                                           (set! (-> self part) v0-0)
                                           v0-0
                                           )

@@ -444,7 +444,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2841
-  :init-specs ((:texture (new 'static 'texture-id :index #x1e :page #x2))
+  :init-specs ((:texture (water-ring effects))
     (:num 8.0)
     (:x (meters 0) (meters 9))
     (:y (meters 0.1))
@@ -475,7 +475,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2842
-  :init-specs ((:texture (new 'static 'texture-id :index #x1e :page #x2))
+  :init-specs ((:texture (water-ring effects))
     (:num 8.0)
     (:x (meters 8) (meters 8))
     (:y (meters 0.1))
@@ -589,7 +589,7 @@
   (process-drawable-from-entity! this arg0)
   (initialize-skeleton this *allpontoons-sg* '())
   (set! (-> this task) (the-as uint (-> arg0 extra perm task)))
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 563) this))
+  (set! (-> this part) (create-launch-control group-allpontoons-trail this))
   (go allpontoons-idle)
   (none)
   )
@@ -666,7 +666,7 @@
                     (let ((t9-2 (method-of-type part-tracker activate)))
                       (t9-2 (the-as part-tracker gp-1) *entity-pool* 'part-tracker (the-as pointer #x70004000))
                       )
-                    (run-now-in-process gp-1 part-tracker-init (-> *part-group-id-table* 678) -1 #f #f #f (-> self root trans))
+                    (run-now-in-process gp-1 part-tracker-init group-village2-fireboulder-hover -1 #f #f #f (-> self root trans))
                     (-> gp-1 ppointer)
                     )
                   )
@@ -773,7 +773,7 @@
             (set! (-> self tracker) (ppointer->handle (process-spawn
                                                         part-tracker
                                                         :init part-tracker-init
-                                                        (-> *part-group-id-table* 271)
+                                                        group-village2-fireboulder
                                                         -1
                                                         #f
                                                         #f
@@ -1065,7 +1065,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2320
-  :init-specs ((:texture (new 'static 'texture-id :page #x2))
+  :init-specs ((:texture (bigpuff effects))
     (:num 0.5)
     (:x (meters -1) (meters 2))
     (:y (meters -1) (meters 2))
@@ -1093,7 +1093,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2319
-  :init-specs ((:texture (new 'static 'texture-id :page #x2))
+  :init-specs ((:texture (bigpuff effects))
     (:num 0.5)
     (:x (meters -1) (meters 2))
     (:y (meters -1) (meters 2))
@@ -1129,7 +1129,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2287
-  :init-specs ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  :init-specs ((:texture (hotdot effects))
     (:num 12.0)
     (:y (meters 1) (meters 3))
     (:scale-x (meters 0.4) (meters 0.1))
@@ -1160,7 +1160,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2321
-  :init-specs ((:texture (new 'static 'texture-id :index #x1e :page #x2))
+  :init-specs ((:texture (water-ring effects))
     (:num 8.0)
     (:x (meters 0) (meters 9))
     (:scale-x (meters 16) (meters 8))
@@ -1190,7 +1190,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2322
-  :init-specs ((:texture (new 'static 'texture-id :index #x1e :page #x2))
+  :init-specs ((:texture (water-ring effects))
     (:num 8.0)
     (:x (meters 8) (meters 8))
     (:scale-x (meters 4.5) (meters 3.5))
@@ -1215,7 +1215,7 @@
 
 ;; failed to figure out what this is:
 (defpart 2288
-  :init-specs ((:texture (new 'static 'texture-id :page #x2))
+  :init-specs ((:texture (bigpuff effects))
     (:num 16.0)
     (:y (meters 0) (meters 1))
     (:scale-x (meters 12) (meters 6))
@@ -1262,7 +1262,7 @@
       (process-spawn
         part-tracker
         :init part-tracker-init
-        (-> *part-group-id-table* 552)
+        group-ogreboulder-splash
         -1
         #f
         #f
@@ -1290,7 +1290,7 @@
       (process-spawn
         part-tracker
         :init part-tracker-init
-        (-> *part-group-id-table* 552)
+        group-ogreboulder-splash
         -1
         #f
         #f
@@ -1318,7 +1318,7 @@
       (process-spawn
         part-tracker
         :init part-tracker-init
-        (-> *part-group-id-table* 551)
+        group-ogreboulder-hit-wall
         -1
         #f
         #f
@@ -1346,7 +1346,7 @@
       (process-spawn
         part-tracker
         :init part-tracker-init
-        (-> *part-group-id-table* 552)
+        group-ogreboulder-splash
         -1
         #f
         #f
@@ -1374,7 +1374,7 @@
       (process-spawn
         part-tracker
         :init part-tracker-init
-        (-> *part-group-id-table* 551)
+        group-ogreboulder-hit-wall
         -1
         #f
         #f
@@ -1402,7 +1402,7 @@
       (process-spawn
         part-tracker
         :init part-tracker-init
-        (-> *part-group-id-table* 552)
+        group-ogreboulder-splash
         -1
         #f
         #f
@@ -1430,7 +1430,7 @@
       (process-spawn
         part-tracker
         :init part-tracker-init
-        (-> *part-group-id-table* 551)
+        group-ogreboulder-hit-wall
         -1
         #f
         #f
@@ -1458,7 +1458,7 @@
       (process-spawn
         part-tracker
         :init part-tracker-init
-        (-> *part-group-id-table* 551)
+        group-ogreboulder-hit-wall
         -1
         #f
         #f
@@ -1488,13 +1488,11 @@
     (send-event
       (handle->process (-> self boulder))
       'eval
-      (lambda :behavior ogreboss-village2
-        ()
-        (let ((v0-0 (create-launch-control (-> *part-group-id-table* 564) self)))
-          (set! (-> self part) v0-0)
-          v0-0
-          )
-        )
+      (lambda :behavior ogreboss-village2 () (let ((v0-0 (create-launch-control group-ogreboulder-trail self)))
+                                               (set! (-> self part) v0-0)
+                                               v0-0
+                                               )
+                                          )
       )
     (ja-channel-push! 1 (seconds 0.2))
     (ja-no-eval :group! ogreboss-village2-pre-throw-ja :num! (seek!) :frame-num 0.0)

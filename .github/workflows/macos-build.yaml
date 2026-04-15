@@ -17,35 +17,39 @@ on:
 jobs:
   build:
     name: Intel
-    runs-on: macos-12
+    runs-on: macos-15-intel
     timeout-minutes: 120
 
     steps:
       # minimal checkout if we're NOT uploading artifacts
       - name: Checkout Repository
         if: ${{ ! inputs.uploadArtifacts }}
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
+        uses: actions/checkout@v6
 
       # full checkout with tags if we ARE uploading artifacts
       - name: Checkout Repository with Tags
         if: ${{ inputs.uploadArtifacts }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
 
       - name: Install Package Dependencies
-        run: brew install cmake nasm ninja
+        env:
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
+          HOMEBREW_NO_ANALYTICS: 1
+        run: |
+          if ! brew install ninja nasm; then
+            brew update
+            brew install ninja nasm
+          fi
 
       - name: Setup sccache
-        uses: hendrikmuhs/ccache-action@v1.2.14
+        uses: hendrikmuhs/ccache-action@v1.2.22
         with:
           variant: sccache
-          key: macos-12-${{ inputs.cachePrefix }}-${{ inputs.cmakePreset }}-${{ github.sha }}
-          restore-keys: macos-12-${{ inputs.cachePrefix }}-${{ inputs.cmakePreset }}
+          key: macos-15-intel-${{ inputs.cachePrefix }}-${{ inputs.cmakePreset }}-${{ github.sha }}
+          restore-keys: macos-15-intel-${{ inputs.cachePrefix }}-${{ inputs.cmakePreset }}
           max-size: 1000M
 
       - name: CMake Generation
@@ -60,8 +64,11 @@ jobs:
       - name: Build Project
         run: cmake --build build --parallel $((`sysctl -n hw.logicalcpu`))
 
-      # - name: Run Tests
-      #   run: ./test.sh
+      - name: List libraries of gk
+        run: otool -L ./build/game/gk
+
+      - name: Run Tests
+        run: ./test.sh
 
       - name: Prepare artifacts
         if: ${{ inputs.uploadArtifacts }}
@@ -72,7 +79,7 @@ jobs:
           strip ./build/lsp/lsp
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: ${{ inputs.uploadArtifacts }}
         with:
           name: opengoal-macos-${{ inputs.cachePrefix }}

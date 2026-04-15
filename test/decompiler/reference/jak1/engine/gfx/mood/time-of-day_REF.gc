@@ -126,9 +126,9 @@
           )
         )
       (let* ((f0-4 (the float (-> self frame)))
-             (f0-6 (+ (* 0.0033333334 f0-4) (the float (-> self second))))
-             (f0-8 (+ (* 0.016666668 f0-6) (the float (-> self minute))))
-             (f0-10 (+ (* 0.016666668 f0-8) (the float (-> self hour))))
+             (f0-6 (+ (/ f0-4 300) (the float (-> self second))))
+             (f0-8 (+ (/ f0-6 60) (the float (-> self minute))))
+             (f0-10 (+ (/ f0-8 60) (the float (-> self hour))))
              )
         (set! (-> self time-of-day) f0-10)
         (set! (-> *time-of-day-context* time) f0-10)
@@ -157,9 +157,9 @@
       (set! (-> self time-ratio) 300.0)
       )
   (set! (-> self star-count) 0)
-  (set! (-> self stars) (create-launch-control (-> *part-group-id-table* 34) self))
-  (set! (-> self sun) (create-launch-control (-> *part-group-id-table* 35) self))
-  (set! (-> self green-sun) (create-launch-control (-> *part-group-id-table* 36) self))
+  (set! (-> self stars) (create-launch-control group-stars self))
+  (set! (-> self sun) (create-launch-control group-sun self))
+  (set! (-> self green-sun) (create-launch-control group-green-sun self))
   (go time-of-day-tick)
   (none)
   )
@@ -406,9 +406,9 @@
               f30-0
               )
             (vector4-lerp!
-              (the-as vector (-> arg0 current-sun))
-              (the-as vector (-> arg0 moods 0 current-sun))
-              (the-as vector (-> arg0 moods 1 current-sun))
+              (-> arg0 current-sun sun-color)
+              (-> arg0 moods 0 current-sun sun-color)
+              (-> arg0 moods 1 current-sun sun-color)
               f30-0
               )
             (vector4-lerp!

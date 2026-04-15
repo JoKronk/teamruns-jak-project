@@ -49,7 +49,7 @@
           (let ((a0-18 (-> this icons sv-144 icon 0 root)))
             (set! sv-176 a0-18)
             (set! sv-160 (method-of-object sv-176 set-yaw-angle-clear-roll-pitch!))
-            (let ((a1-2 (+ (y-angle a0-18) (* 182.04445 (* 0.5 (-> *display* time-adjust-ratio)))))) (sv-160 sv-176 a1-2)))
+            (let ((a1-2 (+ (y-angle a0-18) (* 182.04445 (/ (-> *display* time-adjust-ratio) 2))))) (sv-160 sv-176 a1-2)))
           (set! sv-144 (+ sv-144 1)))
         (set! sv-192 (+ sv-112 (/ (- (* 47 (-> s5-0 nb-of-tasks)) (* sv-128 (-> s5-0 nb-of-tasks))) 2)))
         (set! sv-208 0)
@@ -477,8 +477,12 @@
                   (s0-5 *temp-string* arg0 #f s4-1 22))
                 (let ((v1-116 arg0)) (set! (-> v1-116 scale) 0.5))
                 (+! (-> arg0 origin y) 9.0)
-                (set! (-> arg0 flags) (font-flags shadow kerning large))
-                (set! (-> arg0 origin x) (the float (- 85 (-> this left-x-offset))))
+                ;; og:preserve-this add 'middle' flag when custom-aspect to snap totals with counts
+                (if (-> *pc-settings* use-vis?)
+                  (set! (-> arg0 flags) (font-flags shadow kerning large))
+                  (set! (-> arg0 flags) (font-flags shadow kerning middle large)))
+                ;; og:preserve-this when custom-aspect use same offsets from counts for totals
+                (set! (-> arg0 origin x) (the float (- (if (-> *pc-settings* use-vis?) 85 -73) (-> this left-x-offset))))
                 (let ((s0-6 print-game-text))
                   (set! sv-80 format)
                   (let ((a0-56 (clear *temp-string*))
@@ -486,7 +490,8 @@
                         (a2-17 (if (< 100 (the int (-> s3-3 file s1-0 fuel-cell-count))) (-> this total-nb-of-power-cells) 100)))
                     (sv-80 a0-56 a1-21 a2-17))
                   (s0-6 *temp-string* arg0 #f s4-1 22))
-                (set! (-> arg0 origin x) (the float (- 150 (-> this left-x-offset))))
+                ;; og:preserve-this when custom-aspect use same offsets from counts for totals
+                (set! (-> arg0 origin x) (the float (- (if (-> *pc-settings* use-vis?) 150 1) (-> this left-x-offset))))
                 (let ((s0-7 print-game-text))
                   (set! sv-96 format)
                   (let ((a0-60 (clear *temp-string*))
@@ -494,7 +499,8 @@
                         (a2-19 (-> this total-nb-of-orbs)))
                     (sv-96 a0-60 a1-23 a2-19))
                   (s0-7 *temp-string* arg0 #f s4-1 22))
-                (set! (-> arg0 origin x) (the float (- 238 (-> this left-x-offset))))
+                ;; og:preserve-this when custom-aspect use same offsets from counts for totals
+                (set! (-> arg0 origin x) (the float (- (if (-> *pc-settings* use-vis?) 238 79) (-> this left-x-offset))))
                 (let ((s0-8 print-game-text))
                   (set! sv-112 format)
                   (let ((a0-64 (clear *temp-string*))
@@ -1045,7 +1051,7 @@
           (s2-0 *temp-string*
                 s3-0
                 (the int (+ 428.0 (the float s5-0) f30-0))
-                (- 12 (the int (* 0.16666667 f30-0)))
+                (- 12 (the int (/ f30-0 6)))
                 (font-color default)
                 (font-flags shadow kerning large)))
         (let ((s2-1 draw-string-xy))
@@ -1053,7 +1059,7 @@
           (s2-1 *temp-string*
                 s3-0
                 (the int (+ 456.0 (the float (adjust-pos s5-0 50)) f30-0))
-                (- 48 (the int (* 0.125 f30-0)))
+                (- 48 (the int (/ f30-0 8)))
                 (font-color default)
                 (font-flags shadow kerning large)))
         (let ((s2-2 draw-string-xy))
