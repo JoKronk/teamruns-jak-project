@@ -7,6 +7,7 @@
 #include "game/graphics/display.h"
 #include "game/graphics/gfx.h"
 #include "game/graphics/jak3_texture_remap.h"
+#include "game/multiplayer.h"
 #include "game/graphics/sceGraphicsInterface.h"
 #include "game/kernel/common/fileio.h"
 #include "game/kernel/common/kdgo.h"
@@ -428,6 +429,11 @@ void InitMachine_PCPort() {
 
   // discord rich presence
   make_function_symbol_from_c("pc-discord-rpc-update", (void*)kmachine_extras::update_discord_rpc);
+
+  // websocket multiplayer
+  make_function_symbol_from_c("pc-connect-mp-info", (void*)connect_mp_info);
+  make_function_symbol_from_c("pc-clear-mp-command", (void*)clear_mp_command);
+  make_function_symbol_from_c("pc-update-position", (void*)send_position_update);
 
   // debugging tools
   make_function_symbol_from_c("alloc-vagdir-names", (void*)kmachine_extras::alloc_vagdir_names);

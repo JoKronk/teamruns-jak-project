@@ -13,6 +13,7 @@
 #include "common/util/string_util.h"
 
 #include "game/external/discord_jak2.h"
+#include "game/multiplayer.h"
 #include "game/graphics/display.h"
 #include "game/graphics/jak2_texture_remap.h"
 #include "game/kernel/common/Symbol4.h"
@@ -542,6 +543,11 @@ void InitMachine_PCPort() {
 
   // discord rich presence
   make_function_symbol_from_c("pc-discord-rpc-update", (void*)kmachine_extras::update_discord_rpc);
+
+  // websocket multiplayer
+  make_function_symbol_from_c("pc-connect-mp-info", (void*)connect_mp_info);
+  make_function_symbol_from_c("pc-clear-mp-command", (void*)clear_mp_command);
+  make_function_symbol_from_c("pc-update-position", (void*)send_position_update);
 
   // debugging tools
   make_function_symbol_from_c("alloc-vagdir-names", (void*)kmachine_extras::alloc_vagdir_names);

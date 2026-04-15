@@ -1,5 +1,4 @@
 #include "multiplayer.h"
-#include "game/kernel/jak1/kscheme.h"
 #include "game/kernel/common/kmachine.h"
 
 // Custom logger
