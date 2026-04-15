@@ -286,6 +286,29 @@
     )
   )
 
+(defconstant MAX_INTERACTION_BUFFER_COUNT 40)
+(defconstant MAX_GAME_TASKS 128)
+
+(deftype interaction-info (structure)
+ ((has_update? symbol)
+  (type     interaction-type)
+  (amount   float)
+  (status   float)
+  (ename    string)
+  (parent   string)
+  (level    string)
+  )
+  :pack-me
+  (:methods
+    (new (symbol type) _type_)
+    )
+  )
+
+(deftype task-tracker (structure)
+ ((sent uint8 MAX_GAME_TASKS))
+  :pack-me
+  )
+
 (deftype teamrun-player-info (structure)
  (
   (has_state_update?  int32)

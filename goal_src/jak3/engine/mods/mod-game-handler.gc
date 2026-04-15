@@ -7,6 +7,11 @@
 
 ;; Multiplayer game handler for Jak 3
 
+;; Initialize interaction buffer
+(dotimes (idx (-> *interaction-update-buffer* length))
+  (set! (-> *interaction-update-buffer* idx) (new 'global 'interaction-info))
+  )
+
 (defun is-disconnected? ((idx int))
   (= (-> *multiplayer-info* players idx mp_state) (mp-tgt-state mp-tgt-disconnected))
   )

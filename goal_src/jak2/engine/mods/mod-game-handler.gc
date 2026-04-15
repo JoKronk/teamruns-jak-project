@@ -8,6 +8,11 @@
 ;; Multiplayer game handler for Jak 2
 ;; Manages remote player state, collision, and team logic
 
+;; Initialize interaction buffer
+(dotimes (idx (-> *interaction-update-buffer* length))
+  (set! (-> *interaction-update-buffer* idx) (new 'global 'interaction-info))
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Remote Player State Checks
 ;;;;;;;;;;;;;;;;;;;;;;;;;;

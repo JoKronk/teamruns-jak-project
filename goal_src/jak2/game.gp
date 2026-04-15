@@ -294,7 +294,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Multiplayer mod files
 (goal-src "engine/mods/mod-settings-h.gc")
+(goal-src "engine/mods/mod-settings.gc" "mod-settings-h")
 (goal-src "engine/mods/mod-game-handler.gc" "mod-settings-h" "mod-settings")
+(goal-src "engine/mods/mod-custom-code.gc" "mod-settings-h" "mod-settings" "mod-game-handler")
 
 ;; Example Custom Level
 ;;;;;;;;;;;;;;;;;;;;;;;;;

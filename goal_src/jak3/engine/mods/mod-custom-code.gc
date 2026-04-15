@@ -7,6 +7,10 @@
 
 ;; Multiplayer-enabled custom code for Jak 3
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Multiplayer State Updates
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun update-state ()
   (if (and (= *cheat-mode* #f) (= *debug-segment* #f))
     (set! (-> *teamrun-info* debug_mode_active?) 0)
@@ -24,6 +28,144 @@
   (none)
   )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Interaction Buffer System
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun add-interaction-to-buffer ((type interaction-type) (amount float) (status float) (name string) (level string) (parent string))
+  (if *self-setup-completed*
+    (dotimes (idx (-> *interaction-update-buffer* length))
+      (when (= (-> *interaction-update-buffer* idx has_update?) #f)
+
+        (set! (-> *interaction-update-buffer* idx type) type)
+        (set! (-> *interaction-update-buffer* idx amount) amount)
+        (set! (-> *interaction-update-buffer* idx status) status)
+        (set! (-> *interaction-update-buffer* idx ename) name)
+        (set! (-> *interaction-update-buffer* idx level) level)
+        (set! (-> *interaction-update-buffer* idx parent) parent)
+
+        (set! (-> *interaction-update-buffer* idx has_update?) #t)
+        (return #t)
+        )
+      )
+    )
+    (none)
+  )
+
+(defun check-set-interaction-from-buffer ()
+  (if *self-setup-completed*
+    (dotimes (idx (-> *interaction-update-buffer* length))
+      (when (= (-> *interaction-update-buffer* idx has_update?) #t)
+
+        (set! (-> *self-player-info* inter_type) (-> *interaction-update-buffer* idx type))
+        (set! (-> *self-player-info* inter_amount) (-> *interaction-update-buffer* idx amount))
+        (set! (-> *self-player-info* inter_status) (-> *interaction-update-buffer* idx status))
+        (set! (-> *self-player-info* inter_name) (-> *interaction-update-buffer* idx ename))
+        (set! (-> *self-player-info* inter_parent) (-> *interaction-update-buffer* idx parent))
+        (set! (-> *self-player-info* inter_level) (-> *interaction-update-buffer* idx level))
+
+        (set! *has-none-position-update?* #t)
+
+        (set! (-> *interaction-update-buffer* idx has_update?) #f)
+        (return #t)
+        )
+      )
+    )
+  (none)
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Task Completion Polling
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun init-task-tracker ()
+  "Record all currently completed tasks so we don't send them as new on first frame"
+  (dotimes (idx MAX_GAME_TASKS)
+    (if (task-complete? *game-info* (the-as game-task idx))
+      (set! (-> *task-tracker* sent idx) (the uint8 1))
+      (set! (-> *task-tracker* sent idx) (the uint8 0))
+      )
+    )
+  (set! *prev-fuel* (the int (-> *game-info* fuel)))
+  (set! *prev-gem-count* (the int (-> *game-info* gem)))
+  (set! *prev-money-count* (the int (-> *game-info* money)))
+  (set! *tracker-initialized* #t)
+  (none)
+  )
+
+(defun get-current-level-name ()
+  "Get the current level name as a string, or empty string if unavailable"
+  (if (level-get-target-inside *level*)
+    (symbol->string (-> (level-get-target-inside *level*) name))
+    ""
+    )
+  )
+
+(defun check-task-completions ()
+  "Poll for newly completed missions and send interaction data"
+  (let ((current-fuel (the int (-> *game-info* fuel))))
+    (when (> current-fuel *prev-fuel*)
+      ;; Mission(s) completed - find which task(s) are newly complete
+      (dotimes (idx MAX_GAME_TASKS)
+        (when (and (task-complete? *game-info* (the-as game-task idx))
+                   (zero? (-> *task-tracker* sent idx)))
+          (set! (-> *task-tracker* sent idx) (the uint8 1))
+          (add-interaction-to-buffer
+            (interaction-type game-task)
+            (the float idx)
+            0.0
+            (game-task->string (the-as game-task idx))
+            (get-current-level-name)
+            "entity-pool"
+            )
+          )
+        )
+      (set! *prev-fuel* current-fuel)
+      )
+    )
+  (none)
+  )
+
+(defun check-gem-pickups ()
+  "Poll for gem count changes and send interaction data"
+  (let ((current-gems (the int (-> *game-info* gem))))
+    (when (> current-gems *prev-gem-count*)
+      (add-interaction-to-buffer
+        (interaction-type gem)
+        (the float (- current-gems *prev-gem-count*))
+        0.0
+        "gem"
+        (get-current-level-name)
+        "entity-pool"
+        )
+      (set! *prev-gem-count* current-gems)
+      )
+    )
+  (none)
+  )
+
+(defun check-money-pickups ()
+  "Poll for precursor orb count changes and send interaction data"
+  (let ((current-money (the int (-> *game-info* money))))
+    (when (> current-money *prev-money-count*)
+      (add-interaction-to-buffer
+        (interaction-type money)
+        (the float (- current-money *prev-money-count*))
+        0.0
+        "money"
+        (get-current-level-name)
+        "entity-pool"
+        )
+      (set! *prev-money-count* current-money)
+      )
+    )
+  (none)
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Multiplayer Initialization
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun init-multiplayer ()
   (when (not *self-setup-completed*)
     (pc-connect-mp-info *multiplayer-info* *self-player-info* *teamrun-info* *teamrun-levels-info*)
@@ -32,6 +174,10 @@
     )
   (none)
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Self Position Update
+;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun update-self-multiplayer-info ()
   (when (and *target* *self-setup-completed*)
@@ -63,6 +209,10 @@
   (none)
   )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Level Entry Hook
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun runs-on-level-enter ()
   (when (and *target* *self-setup-completed* (!= (-> (level-get-target-inside *level*) name) 'title))
     (when (!= (-> *self-player-info* current_level) (-> (level-get-target-inside *level*) name))
@@ -75,21 +225,51 @@
   (none)
   )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Main Frame Loop
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun runs-every-frame ()
+  ;; Initialize multiplayer connection if not yet done
   (when (and *target* (not *self-setup-completed*))
     (init-multiplayer)
     )
 
+  ;; Process multiplayer commands
   (when *self-setup-completed*
     (execute-teamrun-command)
 
+    ;; Update and send position if not paused
     (when (not *pause-multiplayer-logic*)
+      ;; Initialize task tracker on first active frame
+      (when (not *tracker-initialized*)
+        (init-task-tracker)
+        )
+
+      ;; Poll for game state changes and send interactions
+      (check-task-completions)
+      (check-gem-pickups)
+      (check-money-pickups)
+
+      ;; Drain interaction buffer to self-player-info
+      (check-set-interaction-from-buffer)
+
+      ;; Update and send position
       (update-self-multiplayer-info)
+
+      ;; Cleanup self interaction data after it's been sent
+      (if (!= (-> *self-player-info* inter_type) (interaction-type none))
+        (clean-up-interaction-data *self-player-info*)
+        )
       )
     )
 
   (none)
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Game Event Hooks
+;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun runs-on-jak-spawn ()
   (when *self-setup-completed*

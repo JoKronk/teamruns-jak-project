@@ -7,6 +7,7 @@
 
 (define-extern menu-respond-to-pause (function symbol))
 (define-extern anim-tester-add-object (function string none))
+(defun-extern runs-every-frame (none))
 
 ;; DECOMP BEGINS
 
@@ -1436,6 +1437,7 @@
     (if (-> *level* loading-level)
         (load-continue (-> *level* loading-level))
         )
+    (runs-every-frame) ;;mod-base-change
 
     ; ;; modify vertices for merc face animation. I believe this is somewhat racing DMA of merc data to VU1.
     (with-profiler 'merc *profile-merc-color*

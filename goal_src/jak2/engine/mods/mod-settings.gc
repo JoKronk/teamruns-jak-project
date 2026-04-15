@@ -69,6 +69,19 @@
     )
   )
 
+(defmethod new interaction-info ((allocation symbol) (type-to-make type))
+  (let ((obj (object-new allocation type-to-make (the-as int (-> type-to-make size)))))
+    (set! (-> obj has_update?) #f)
+    (set! (-> obj type) (interaction-type none))
+    (set! (-> obj amount) 0.0)
+    (set! (-> obj status) 0.0)
+    (set! (-> obj ename) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj parent) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    (set! (-> obj level) (new 'global 'string INTERACTION_STRING_LEN (the-as string #f)))
+    obj
+    )
+  )
+
 (defmethod new game-mode ((allocation symbol) (type-to-make type))
   (let ((obj (object-new allocation type-to-make (the-as int (-> type-to-make size)))))
     (set! (-> obj mode) (run-mode speedrun))
@@ -199,6 +212,16 @@
 (define *player-can-load* #f)
 (define *allow-cell-pickup?* #t)
 (define *allow-orb-pickup?* #t)
+
+;; Interaction buffer for multiplayer events
+(define *interaction-update-buffer* (new 'global 'boxed-array interaction-info MAX_INTERACTION_BUFFER_COUNT))
+
+;; Task completion tracking
+(define *task-tracker* (new 'global 'task-tracker))
+(define *tracker-initialized* #f)
+(define *prev-fuel* -1)
+(define *prev-gem-count* -1)
+(define *prev-money-count* -1)
 
 ;; do NOT change %MODVERSIONPLACEHOLDER% below, otherwise the mod-bundling-tools
 ;;   will be unable to automatically add version info to the speedrun display
